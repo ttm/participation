@@ -13,7 +13,7 @@ def publishAll(mysqldb=None,mongoshouts=None,irclog=None,oreshouts=None):
     if mongoshouts:
         mongoshouts=MongoPublishing(mongoshouts); c("mongo ok")
     if irclog:
-        ircslog=LogPublishing(irclog); c("irc ok")
+        irclog=LogPublishing(irclog); c("irc ok")
     if oreshouts:
         oreshouts=OrePublishing(oreshouts); c("ore ok")
     return mysqldb,mongoshouts,irclog,oreshouts

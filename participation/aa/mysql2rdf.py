@@ -6,10 +6,14 @@ class MysqlPublishing(AAConfig):
     meta_graph="participation_aamysql_meta"
     snapshotid="aa-mysql-legacy"
     def __init__(self,mysqldict):
+        # first aa implementation
         snapshotid=P.rdf.ic(po.AASnapshot,self.snapshotid,self.meta_graph)
         locals_=locals().copy(); del locals_["self"]
         participantvars=["nick","email"]
         messagevars=["textMessage","session","author","isValid","createdAt"]
+        sessionvars=["screenshot","score","checker","checkMessage","createdAt"]
+        comment="shouts from first AA, a fancy version of AA with sessions and screenshot urls"
+        provenance="mysql"
         for i in locals_:
             exec("self.{}={}".format(i,i))
         self.rdfMysql()
@@ -79,6 +83,5 @@ class MysqlPublishing(AAConfig):
                      (shouturi,po.textMessage,shout[4]),
                      (shouturi,po.createdAt,shout[5]),
                      (shouturi,po.isValid,shout[6]),
-                     (shouturi,po.provenance,"mysql"),
                      ]
         P.add(triples,self.translation_graph)
