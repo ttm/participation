@@ -43,7 +43,7 @@ def connectMongo():
     client=pymongo.MongoClient(aa.mongouri)
     shouts=client.aaserver.shouts.find({})
     shouts_=[shout for shout in shouts]
-    return shouts
+    return shouts_
 
 def accessIrcLog():
     with codecs.open("../../social/data/irc/labmacambira_lalenia3.txt","rb","iso-8859-1")  as f:

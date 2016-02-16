@@ -2,8 +2,11 @@ from .general import AAConfig
 import percolation as P
 from percolation.rdf import po
 class MysqlPublishing(AAConfig):
-    translation_graph="participation_aamysql"
+    translation_graph="participation_aamysql_translation"
+    meta_graph="participation_aamysql_meta"
+    snapshotid="aa-mysql-legacy"
     def __init__(self,mysqldict):
+        snapshotid=P.rdf.ic(po.AASnapshot,self.snapshotid,self.meta_graph)
         locals_=locals().copy(); del locals_["self"]
         participantvars=["nick","email"]
         messagevars=["textMessage","session","author","isValid","createdAt"]
@@ -29,7 +32,7 @@ class MysqlPublishing(AAConfig):
                          ]
 
         for session in self.mysqldict["sessions"]:
-            sessionuri=P.rdf.ic(po.Session,"aa-mysql-legacy-"+str(session[0]),self.translation_graph,self.snapshoturi)
+            sessionuri=P.rdf.ic(po.Session,self.snapshotid+"-"+str(session[0]),self.translation_graph,self.snapshoturi)
             if session[1] not in user_dict:
                 continue
             useruri=user_dict[session[1]]
@@ -62,9 +65,9 @@ class MysqlPublishing(AAConfig):
         for shout in self.mysqldict["messages"]:
             if shout[2] not in user_dict:
                 continue
-            shouturi=P.rdf.ic(po.Shout,"aa-mysql-legacy-"+str(shout[0]),self.translation_graph,self.snapshoturi)
+            shouturi=P.rdf.ic(po.Shout,self.snapshotid+"-"+str(shout[0]),self.translation_graph,self.snapshoturi)
             if int(shout[1]):
-                sessionuri=po.Session+"#aa-mysql-legacy-"+str(shout[1])
+                sessionuri=po.Session+"#"+self.snapshotid+"-"+str(shout[1])
                 triples+=[
                          (shouturi,po.session,sessionuri),
                          ]
@@ -76,4 +79,6 @@ class MysqlPublishing(AAConfig):
                      (shouturi,po.textMessage,shout[4]),
                      (shouturi,po.createdAt,shout[5]),
                      (shouturi,po.isValid,shout[6]),
+                     (shouturi,po.provenance,"mysql"),
                      ]
+        P.add(triples,self.translation_graph)
