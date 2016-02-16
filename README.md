@@ -41,11 +41,10 @@ Routines should be oriented towards making RDF data from participatory instances
 
 ### package structure
 Data not in RDF are kept in the data/ directory.
-Rendered RDF data should be in G.PERCOLATIONDIR="~./percolation/rdf/" unless otherwise specified.
+Credentials for mysql, postgresql and mongodb connections should be left in G.PARTICIPATIONDIR+accesses.py.
 Each platform/protocol has an umbrella module in which are modules for accessing current data in platforms
 and expressing them as RDF.
 This package relies heavily in the percolation package to assist rendering of RDF data.
-
 
 #### the modules are:
 bootstrap.py for starting system with basic variables and routines

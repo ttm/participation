@@ -1,14 +1,23 @@
 from participation import DATADIR
-import percolation as P, social as S, os
+import percolation as P, social as S, participation as Pa, rdflib as r, os
 from percolation.rdf import NS, a, po, c
 import MySQLdb, pymongo, codecs
+exec(open(Pa.PARTICIPATIONDIR+"accesses.py").read())
+
 def connectMysql():
-    db2=MySQLdb.connect(user="root",passwd="foobar",db="fbdb",use_unicode=True)
-    db= MySQLdb.connect(user="root",passwd="foobar",db="fbdb2",use_unicode=True)
+    db2=MySQLdb.connect(user=aa.mysqluser1,passwd=aa.mysqlpassword1,db=aa.mysqldb1,use_unicode=True)
+    db= MySQLdb.connect(user=aa.mysqluser2,passwd=aa.mysqlpassword2,db=aa.mysqldb2,use_unicode=True)
+
     db.query("SET NAMES utf8")
     db.query('SET character_set_connection=utf8')
     db.query('SET character_set_client=utf8')
     db.query('SET character_set_results=utf8')
+    db2.query("SET NAMES utf8")
+    db2.query('SET character_set_connection=utf8')
+    db2.query('SET character_set_client=utf8')
+    db2.query('SET character_set_results=utf8')
+#    db2.query("show tables;")
+
     db.query("show tables;")
     res=db.store_result()
     aa_tables=[res.fetch_row()[0][0] for i in range(res.num_rows())]
@@ -31,21 +40,36 @@ def connectMysql():
     return d,d2
 
 def connectMongo():
-    client=pymongo.MongoClient("mongodb://labmacambira:macambira00@ds031948.mongolab.com:31948/aaserver")
+    client=pymongo.MongoClient(aa.mongouri)
     shouts=client.aaserver.shouts.find({})
     shouts_=[shout for shout in shouts]
     return shouts
 
-def parseIrcLog():
+def accessIrcLog():
     with codecs.open("../../social/data/irc/labmacambira_lalenia3.txt","rb","iso-8859-1")  as f:
         logtext=S.irc.log2rdf.textFix(f.read())
     return logtext
+def accessOreShouts():
+    g=r.Graph()
+    for oredir in aa.oredirs:
+        files=os.listdir(os.path.expanduser(oredir))
+        for file_ in files:
+            if file_.endswith(".ttl"):
+                g.parse(os.path.expanduser(oredir)+file_,format="turtle")
+            else:
+                g.parse(os.path.expanduser(oredir)+file_)
+    return g
+
+
+
 def parseLegacyFiles(data_dir=DATADIR+"aa/"):
     """Parse legacy files with aa shouts and sessions"""
     # access mysql, access mongo, access irc log from social/
-    mysqldata1,mysqldata2=connectMysql()
-    mongoshouts=connectMongo()
-    ircshouts=parseIrcLog()
+    c("starting aa access")
+    #mysqldata1,mysqldata2=connectMysql(); c("mysql ok")
+    #mongoshouts=connectMongo(); c("mongo ok")
+    #ircshouts=accessIrcLog(); c("irc ok")
+    oreshouts=accessOreShouts(); c("ore ok")
     filenames=[]
     triples=[]
     snapshots=set()
