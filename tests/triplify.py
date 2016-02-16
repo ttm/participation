@@ -6,7 +6,8 @@ for key in keys:
 import participation as Pa, percolation as P
 from percolation.rdf import NS, a, po, c
 
-ss=Pa.aa.access.parseLegacyFiles()
+#ss=Pa.aa.access.parseLegacyFiles()
+ss=Pa.aa.access.parseLegacyFiles(1,0,0,0)
 
 triplification_classes=Pa.aa.render.publishAll(*ss)
 c("finished publication of all")
