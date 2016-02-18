@@ -5,8 +5,8 @@ class LogPublishing(AAPublishing):
     translation_graph="participation_aairc_translation"
     meta_graph="participation_aairc_meta"
     snapshotid="aa-irc-legacy"
-    def __init__(self,logtext,final_path="aa_snapshots"):
-        AAPublishing.__init__(self,final_path)
+    def __init__(self,logtext,final_path="aa_snapshots/"):
+        AAPublishing.__init__(self,final_path,self.snapshotid)
         snapshoturi=P.rdf.ic(po.AASnapshot,self.snapshotid,self.meta_graph)
         #rmsg=r"(\d{4})\-(\d{2})\-(\d{2})T(\d{2}):(\d{2}):(\d{2})  \<(.*?)\> (.*)" # message
         rmsg=r"(\d{4})\-(\d{2})\-(\d{2})T(\d{2}):(\d{2}):(\d{2})  \<(.*?)\> (;aa +(.*)|lalenia[,:]{0,1} +aa +(.*))"
@@ -19,7 +19,7 @@ class LogPublishing(AAPublishing):
             exec("self.{}={}".format(i,i))
         self.rdfTranslate()
         self.makeMetadata()
-        self.writeAllIRC()
+        self.writeAll()
     def rdfTranslate(self):
         self.messages=re.findall(self.rmsg,self.logtext)
         #foo=re.findall(r"(\d{4})\-(\d{2})\-(\d{2})T(\d{2}):(\d{2}):(\d{2})  \<(.*?)\> (\;aa |lalenia[,:]{0,1} +aa) +(.*)",aa.logtext)
@@ -33,11 +33,11 @@ class LogPublishing(AAPublishing):
             shoutid=self.snapshotid+"-"+nick+"-"+datetime_.isoformat()
             shouturi=P.rdf.ic(po.Shout,shoutid,self.translation_graph,self.snapshoturi)
             if shout1:
-                triples+=self.addShout(shouturi,shout1)
+                triples+=self.addText(shouturi,shout1)
             elif shout2:
                 if shout2.startswith("shout"):
                     shout2=shout2[5:].strip()
-                triples+=self.addShout(shouturi,shout2)
+                triples+=self.addText(shouturi,shout2)
             else:
                 raise ValueError("Shout vazio?")
             participantid=self.snapshotid+"-"+nick

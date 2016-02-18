@@ -1,11 +1,19 @@
 from percolation.rdf import NS, po, a, c
-import percolation as P, numpy as n, nltk as k, os
-class AAPublishing:
+from percolation.rdf.publishing import TranslationPublishing
+import percolation as P, numpy as n, nltk as k, os, re, datetime, shutil
+from participation import PACKAGEDIR
+class AAPublishing(TranslationPublishing):
     hastext=True
     isinteraction=False
     isfriendship=False
-    def __init__(self,final_path="some_snapshots"):
+    isego=False
+    isgroup=False
+    def __init__(self,final_path="some_snapshots/",umbrella_dir=None,snapshotid):
+        TranslationPublishing.__init__(self,final_path,umbrella_dir,snapshotid)
         final_path_="{}{}/".format(final_path,self.snapshotid)
+        if not umbrella_dir:
+            umbrella_dir=final_path
+        online_prefix="https://raw.githubusercontent.com/OpenLinkedSocialData/{}master/{}/".format(umbrella_dir,self.snapshotid)
         if not os.path.isdir(final_path):
             os.mkdir(final_path)
         if not os.path.isdir(final_path_):
@@ -18,29 +26,30 @@ class AAPublishing:
         qtriples=[
                  ("?fooshout",po.shoutText,"?text"),
                  ]
-        totalchars=sum(                self.size_chars_overall)
-        mchars_messages=n.mean(        self.size_chars_overall)
-        dchars_messages=n.std(         self.size_chars_overall)
-        totaltokens=sum(              self.size_tokens_overall)
-        mtokens_messages=n.mean(      self.size_tokens_overall)
-        dtokens_messages=n.std(       self.size_tokens_overall)
-        totalsentences=sum(        self.size_sentences_overall)
-        msentences_messages=n.mean(self.size_sentences_overall)
-        dsentences_messages=n.std( self.size_sentences_overall)
-        nmessages=P.get("SELECT (COUNT(?s) as ?s) WHERE { ?s a po:Shout }",context=self.translation_graph)
-        nparticipants=P.get("SELECT (COUNT(?s) as ?s) WHERE { ?s a po:Participant }",context=self.translation_graph)
+        self.totalchars=sum(                self.size_chars_overall)
+        self.mchars_messages=n.mean(        self.size_chars_overall)
+        self.dchars_messages=n.std(         self.size_chars_overall)
+        self.totaltokens=sum(              self.size_tokens_overall)
+        self.mtokens_messages=n.mean(      self.size_tokens_overall)
+        self.dtokens_messages=n.std(       self.size_tokens_overall)
+        self.totalsentences=sum(        self.size_sentences_overall)
+        self.msentences_messages=n.mean(self.size_sentences_overall)
+        self.dsentences_messages=n.std( self.size_sentences_overall)
+        self.nmessages=P.get("SELECT (COUNT(?s) as ?s) WHERE { ?s a po:Shout }",context=self.translation_graph)
+        self.nparticipants=P.get("SELECT (COUNT(?s) as ?s) WHERE { ?s a po:Participant }",context=self.translation_graph)
+        self.nurls=P.get("SELECT (COUNT(?s) as ?s) WHERE { ?s po:hasUrl ?o }",context=self.translation_graph)
         triples=[
-                (self.snapshoturi, po.nParticipants,     nparticipants),
-                (self.snapshoturi, po.nMessages,         nmessages),
-                (self.snapshoturi, po.nCharsOverall,     totalchars),
-                (self.snapshoturi, po.mCharsOverall,     mchars_messages),
-                (self.snapshoturi, po.dCharsOverall,     dchars_messages),
-                (self.snapshoturi, po.nTokensOverall,    totaltokens),
-                (self.snapshoturi, po.mTokensOverall,    mtokens_messages),
-                (self.snapshoturi, po.dTokensOverall,    dtokens_messages),
-                (self.snapshoturi, po.nSentencesOverall, totalsentences),
-                (self.snapshoturi, po.mSentencesOverall, msentences_messages),
-                (self.snapshoturi, po.dSentencesOverall, dsentences_messages),
+                (self.snapshoturi, po.nParticipants,     self.nparticipants),
+                (self.snapshoturi, po.nMessages,         self.nmessages),
+                (self.snapshoturi, po.nCharsOverall,     self.totalchars),
+                (self.snapshoturi, po.mCharsOverall,     self.mchars_messages),
+                (self.snapshoturi, po.dCharsOverall,     self.dchars_messages),
+                (self.snapshoturi, po.nTokensOverall,    self.totaltokens),
+                (self.snapshoturi, po.mTokensOverall,    self.mtokens_messages),
+                (self.snapshoturi, po.dTokensOverall,    self.dtokens_messages),
+                (self.snapshoturi, po.nSentencesOverall, self.totalsentences),
+                (self.snapshoturi, po.mSentencesOverall, self.msentences_messages),
+                (self.snapshoturi, po.dSentencesOverall, self.dsentences_messages),
                 ]
         P.add(triples,context=self.meta_graph)
         P.rdf.triplesScaffolding(self.snapshoturi,
@@ -63,14 +72,14 @@ class AAPublishing:
         self.desc+="\nisFriendship: {}; ".format(self.isfriendship)
         self.desc+="isInteraction: {}.".format(self.isinteraction)
         self.nchecks=P.get(r"SELECT (COUNT(?checker) as ?cs) WHERE { ?foosession po:checkParticipant ?checker}",context=self.translation_graph)
-        self.desc+="\nnParticipants: {}; nInteractions: {} (only session checks in first aa).".format(self.nparticipants,self.ncheckers)
+        self.desc+="\nnParticipants: {}; nInteractions: {} (only session checks in first aa).".format(self.nparticipants,self.nchecks)
         self.desc+="\nisPost: {} (alias hasText: {})".format(self.hastext,self.hastext)
         self.desc+="\nnMessages: {}; ".format(self.nmessages)
 
-        self.desc+="\nnCharsOverall: {}; mCharsOverall: {}; dCharsOverall: {}.".format(self.totalchars,self.mcharsmessages,self.dcharsmessages)
-        self.desc+="\nnTokensOverall: {}; mTokensOverall: {}; dTokensOverall: {};".format(self.totaltokens,self.mtokensmessages,self.dtokensmessages)
-        self.desc+="\nnSentencesOverall: {}; mSentencesOverall: {}; dSentencesOverall: {};".format(self.totalsentences,self.msentencesmessages,self.dsentencesmessages)
-        self.desc+="\nnURLs: {}; nAAMessages {}.".format(self.nurls,self.naamessages)
+        self.desc+="\nnCharsOverall: {}; mCharsOverall: {}; dCharsOverall: {}.".format(self.totalchars,                    self.mchars_messages,     self.dchars_messages)
+        self.desc+="\nnTokensOverall: {}; mTokensOverall: {}; dTokensOverall: {};".format(self.totaltokens,               self.mtokens_messages,    self.dtokens_messages)
+        self.desc+="\nnSentencesOverall: {}; mSentencesOverall: {}; dSentencesOverall: {};".format(self.totalsentences,self.msentences_messages, self.dsentences_messages)
+        self.desc+="\nnURLs: {}; nAAMessages {}.".format(self.nurls,self.nmessages)
         triples=[
                 (self.snapshoturi, po.triplifiedIn,      datetime.datetime.now()),
                 (self.snapshoturi, po.triplifiedBy,      "scripts/"),
@@ -80,12 +89,12 @@ class AAPublishing:
                 (self.snapshoturi, po.onlineMetaTTLFile, self.online_prefix+self.mttl),
                 (self.snapshoturi, po.metaXMLFileName,   self.mrdf),
                 (self.snapshoturi, po.metaTTLFileName,   self.mttl),
-                (self.snapshoturi, po.totalXMLFileSizeMB, sum(self.size_xml)),
-                (self.snapshoturi, po.totalTTLFileSizeMB, sum(self.size_ttl)),
+                (self.snapshoturi, po.totalXMLFileSizeMB, self.size_xml),
+                (self.snapshoturi, po.totalTTLFileSizeMB, self.size_ttl),
                 (self.snapshoturi, po.acquiredThrough,   "aa shouts in "+self.snapshotid),
                 (self.snapshoturi, po.socialProtocolTag, "AA"),
                 (self.snapshoturi, po.socialProtocol,    P.rdf.ic(po.Platform,"IRC",self.meta_graph,self.snapshoturi)),
-                (self.snapshoturi, po.nTriples,         self.ntriples),
+                (self.snapshoturi, po.nTriples,         self.ntranslation_triples),
                 (self.snapshoturi, NS.rdfs.comment,         self.desc),
                 ]
         P.add(triples,self.meta_graph)
@@ -103,28 +112,26 @@ class AAPublishing:
         c("serialized meta")
         if not os.path.isdir(self.final_path_+"scripts"):
             os.mkdir(self.final_path_+"scripts")
-        shutil.copy(S.PACKAGEDIR+"/../tests/triplify.py",self.final_path_+"scripts/triplify.py")
+        shutil.copy(PACKAGEDIR+"/../tests/triplify.py",self.final_path_+"scripts/triplify.py")
         # copia do base data
-        tinteraction="""\n\n{} individuals with metadata {}
-and {} interactions (direct messages: {}, user mentions: {}) 
-constitute the interaction 
-structure in the RDF/XML file(s):
+        text="""structure in the RDF/XML file(s):
 {}
 and the Turtle file(s):
 {}
-(anonymized: "nicks inteface").""".format( self.nparticipants,str(self.participantvars),
-                    self.ndirect+self.nmention,self.ndirect,self.nmention,
-                    self.log_xml,
-                    self.log_ttl)
-        tposts="""\n\nThe dataset consists of {} irc messages with metadata {}
+(anonymized: False "nicks inteface").""".format( self.nparticipants,str(self.participantvars),
+                    self.nchecks,self.ndirect,self.nmention,
+                    self.translation_xml,
+                    self.translation_ttl)
+        tposts="""\n\nThe dataset consists of {} shout messages with metadata {}
 {:.3f} characters in average (std: {:.3f}) and total chars in snapshot: {}
 {:.3f} tokens in average (std: {:.3f}) and total tokens in snapshot: {}
 {:.3f} sentences in average (std: {:.3f}) and total sentences in snapshot: {}""".format(
                         self.nmessages,str(self.messagevars),
-                         self.mcharsmessages, self.dcharsmessages,self.totalchars,
+                        self.mcharsmessages, self.dcharsmessages,self.totalchars,
                         self.mtokensmessages,self.dtokensmessages,self.totaltokens,
                         self.msentencesmessages,self.dsentencesmessages,self.totalsentences,
                         )
+        self.dates=P.get(r"SELECT ?date WHERE { GRAPH <%s> { ?fooshout po:createdAt ?date } "%(self.translation_graph,))
         self.dates=[i.isoformat() for i in self.dates]
         date1=min(self.dates)
         date2=max(self.dates)
@@ -146,10 +153,10 @@ Has text/posts: {ist}
 
 The script that rendered this data publication is on the script/ directory.\n:::""".format(
                 snapid=self.snapshotid,date1=date1,date2=date2,ntrip=self.ntriples,
-                        tinteraction=tinteraction,
+                        tinteraction=tposts,
                         tposts=tposts,
-                        mrdf=self.log_xml,
-                        mttl=self.log_ttl,
+                        mrdf=self.translation_xml,
+                        mttl=self.translation_ttl,
                         ise=self.isego,
                         isg=self.isgroup,
                         isf=self.isfriendship,
@@ -159,16 +166,22 @@ The script that rendered this data publication is on the script/ directory.\n:::
                         desc=self.desc
                         ))
 
-    def addShout(self,shouturi,shouttext):
-        size_chars=len(shouttext)
-        size_tokens=len(k.wordpunct_tokenize(shouttext))
-        size_sentences=len(k.sent_tokenize(shouttext))
+    regex_url=re.compile('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
+    def addText(self,messageuri,messagetext):
+        size_chars=len(messagetext)
+        size_tokens=len(k.wordpunct_tokenize(messagetext))
+        size_sentences=len(k.sent_tokenize(  messagetext))
         triples=[
-                (shouturi, po.shoutMessage, shouttext),
-                (shouturi, po.nChars,       size_chars),
-                (shouturi, po.nTokens,      size_tokens),
-                (shouturi, po.nSentences,   size_sentences),
+                (messageuri, po.textMessage, messagetext),
+                (messageuri, po.nChars,       size_chars),
+                (messageuri, po.nTokens,      size_tokens),
+                (messageuri, po.nSentences,   size_sentences),
                 ]
+        urls = self.regex_url.findall(messagetext)
+        for url in urls:
+            triples+=[
+                     (messageuri,po.hasUrl,url),
+                     ]
         self.size_chars_overall+=[size_chars]
         self.size_tokens_overall+=[size_tokens]
         self.size_sentences_overall+=[size_sentences]
@@ -181,6 +194,9 @@ The script that rendered this data publication is on the script/ directory.\n:::
             self.translation_xml=self.snapshotid+"Translation.rdf"
             g.serialize(self.final_path_+self.translation_ttl,"turtle"); c("ttl")
             g.serialize(self.final_path_+self.translation_xml,"xml")
+            self.size_ttl=os.path.getsize(self.final_path_+self.translation_ttl)/10**6
+            self.size_xml=os.path.getsize(self.final_path_+self.translation_xml)/10**6
+            self.ntranslation_triples=len(g)
         elif mode=="chunk":
             # writeByChunks
             raise NotImplementedError("Perform P.utils.writeByChunks on self.translation_graph")
