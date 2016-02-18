@@ -1,14 +1,14 @@
-from .general import AAConfig
+from .general import AAPublishing
 import percolation as P
 from percolation.rdf import po
 
-class MongoPublishing:
+class MongoPublishing(AAPublishing):
     translation_graph="participation_aamongo_translation"
     meta_graph="participation_aammongo_meta"
     snapshotid="aa-mongo-legacy"
     def __init__(self,mongoshouts):
         # minimum aa, aa01
-        snapshotid=P.rdf.ic(po.AASnapshot,self.snapshotid,self.meta_graph)
+        snapshoturi=P.rdf.ic(po.AASnapshot,self.snapshotid,self.meta_graph)
         provenance="mongodb"
         comment="shouts from minimum aa, a simplified mongodb version of AA (aka aa01)"
         participantvars=["nick"]

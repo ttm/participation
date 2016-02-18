@@ -1,13 +1,13 @@
-from .general import AAConfig
+from .general import AAPublishing
 import percolation as P
 from percolation.rdf import po
-class MysqlPublishing(AAConfig):
+class MysqlPublishing(AAPublishing):
     translation_graph="participation_aamysql_translation"
     meta_graph="participation_aamysql_meta"
     snapshotid="aa-mysql-legacy"
     def __init__(self,mysqldict):
         # first aa implementation
-        snapshotid=P.rdf.ic(po.AASnapshot,self.snapshotid,self.meta_graph)
+        snapshoturi=P.rdf.ic(po.AASnapshot,self.snapshotid,self.meta_graph)
         locals_=locals().copy(); del locals_["self"]
         participantvars=["nick","email"]
         messagevars=["textMessage","session","author","isValid","createdAt"]
@@ -49,7 +49,7 @@ class MysqlPublishing(AAConfig):
                 if session[3] in user_dict:
                     checker=user_dict[session[3]]
                     triples+=[
-                             (sessionuri,po.checker,checker),
+                             (sessionuri,po.checkParticipant,checker),
                              ]
             if session[4]:
                 message=session[4]

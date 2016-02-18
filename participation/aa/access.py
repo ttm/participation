@@ -46,9 +46,11 @@ def connectMongo():
     return shouts_
 
 def accessIrcLog():
-    with codecs.open("../../social/data/irc/labmacambira_lalenia3.txt","rb","iso-8859-1")  as f:
-        logtext=S.irc.log2rdf.textFix(f.read())
-        logtext=P.utils.cleanText(logtext)
+    logtext=""
+    for logfile in aa.logfiles:
+        with codecs.open(logfile,"rb","iso-8859-1")  as f:
+            logtext_=S.irc.log2rdf.textFix(f.read())
+            logtext+="\n"+P.utils.cleanText(logtext_)
     return logtext
 def accessOreShouts():
     g=r.Graph()
