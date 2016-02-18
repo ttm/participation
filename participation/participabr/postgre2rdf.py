@@ -1,5 +1,4 @@
-from .general import AAPublishing
-import percolation as P
+import percolation as P, rdflib as r, urllib
 from percolation.rdf import NS,po,a,c
 from percolation.rdf.publishing import TranslationPublishing
 
@@ -7,11 +6,11 @@ class ParticipabrPublishing(TranslationPublishing):
     snapshotid="participabr-legacy"
     translation_graph="participabr-translation"
     meta_graph="participabr-meta"
-    def __init__(self):
+    def __init__(self,postgresql_cursor):
         snapshoturi=P.rdf.ic(po.ParticipabrSnapshot,self.snapshotid,self.translation_graph)
-        P.add(snapshoturi,a,po.Snapshot)
-        self.translateToRdf()
-    def translateToRdf(self):
+        P.add((snapshoturi,a,po.Snapshot),context=self.translation_graph)
+
+        cur=postgresql_cursor
         cur.execute('SELECT * FROM users')
         users = cur.fetchall()
         cur.execute('SELECT * FROM profiles')
@@ -55,9 +54,16 @@ class ParticipabrPublishing(TranslationPublishing):
         TTN=cur.fetchall()
         TTN=[i[0] for i in TTN[::-1]]
 
+        locals_=locals().copy(); del locals_["self"]
+        for i in locals_:
+            exec("self.{}={}".format(i,i))
+        self.translateToRdf()
+
+    def translateToRdf(self):
         triples=[]
-        for pp in profiles:
+        for pp in self.profiles:
             ### tabela profiles
+            return
             ind=opa.Member+"#"+Q_("identifier")
             G(ind,rdf.type,opa.Member)
             G( ind,opa.name, L(Q("name"),xsd.string) )
@@ -205,5 +211,19 @@ class ParticipabrPublishing(TranslationPublishing):
             G(tfr,opa.article,art)
             G(tfr,opa.created,L(tt[4],xsd.dateTime))
 
+def fparse(mstring):
+    foo=[i for i in mstring.split("\n")[1:-1] if i]
+    return dict([[j.strip().replace('"',"") for j in i.split(":")[1:]] for i in foo if  len(i.split(":"))==3])
+U=r.URIRef
+QQ=urllib.parse.quote
+def Q_(mstr):
+    return QQ(pp[PN.index(mstr)])
+def Q(mstr):
+    return pp[PN.index(mstr)]
+def QA(mstr):
+    return aa[AN.index(mstr)]
+def QC(mstr):
+    return cc[CN.index(mstr)]
 
-
+def QF(mstr):
+    return fr[FRN.index(mstr)]
