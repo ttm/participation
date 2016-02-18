@@ -8,7 +8,7 @@ class AAPublishing(TranslationPublishing):
     isfriendship=False
     isego=False
     isgroup=False
-    def __init__(self,final_path="some_snapshots/",umbrella_dir=None,snapshotid):
+    def __init__(self,snapshotid,final_path="some_snapshots/",umbrella_dir=None):
         TranslationPublishing.__init__(self,final_path,umbrella_dir,snapshotid)
         final_path_="{}{}/".format(final_path,self.snapshotid)
         if not umbrella_dir:

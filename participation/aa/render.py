@@ -18,13 +18,3 @@ def publishAll(mysqldb=None,mongoshouts=None,irclog=None,oreshouts=None):
         oreshouts=OrePublishing(oreshouts); c("ore ok")
     return mysqldb,mongoshouts,irclog,oreshouts
 
-def publishAny(snapshoturi):
-    # publish to umbrelladir
-    triples=[
-            (snapshoturi,      po.dataDir, "?datadir"),
-            (snapshoturi,      po.snapshotID, "?snapshotid"),
-            (snapshoturi,      po.rawDirectory, "?directoryurifoo"),
-            ("?directoryurifoo",    po.directoryName, "?directoryname"),
-            ]
-    data_dir,directory,snapshotid=P.get(triples)
-    return MboxPublishing(snapshoturi,snapshotid,directory,data_dir)

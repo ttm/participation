@@ -9,7 +9,10 @@ from percolation.rdf import NS, a, po, c
 #ss=Pa.aa.access.parseLegacyFiles()
 #ss=Pa.aa.access.parseLegacyFiles(1,0,0,0)
 #ss=Pa.aa.access.parseLegacyFiles(0,1,0,0)
-ss=Pa.aa.access.parseLegacyFiles(0,0,1,0)
+#ss=Pa.aa.access.parseLegacyFiles(0,0,1,0)
+#
+#triplification_classes=Pa.aa.render.publishAll(*ss)
+#c("finished publication of all aa")
 
-triplification_classes=Pa.aa.render.publishAll(*ss)
-c("finished publication of all")
+triplification_class=Pa.aa.access.parseLegacyFiles()
+c("finished publication of participabr")
