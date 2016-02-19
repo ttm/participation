@@ -82,7 +82,7 @@ tabela articles
 1 - name, os titulos dos artigos ***
 2 - slug, provavelmente para uso nas urls
 3 - path, caminho para o artigo, creio que complemente urls de grupos, blogs e perfis *****
-4 - parent_id, pouco mais de 1/3 dos artigos possuem um parent_id, que talvez seja id de algum meta artigo, não sei.
+4 - parent_id, pouco mais de 1/3 dos artigos possuem um parent_id, que talvez seja id de algum meta artigo, não sei. Todo parent id está no id.
 5 - body, existem campos vazios, com None, que comecam com "--- ", e os que posseum informacao valida ***
 6 - abstract, há vazios "" e com None e com info real ***
 7 - profile_id,
@@ -99,14 +99,14 @@ tabela articles
 18 - comments_count, jah contemplado com o source_id dos comentarios
 19 - advertise, boleana que suponho ser usado para marcar artigos que devem ser difundidos ou nos quais propagandas devem ser veiculadas.
 20 - published, booleana, para o caso de artigos publicados.
-21 - start_date, presente em 2 casos: eventos e 'CommunityTrackPlugin::Step'
-22 - end_date, mesmo caso que o anterior
+21 - start_date, presente em 2 casos: eventos e 'CommunityTrackPlugin::Step' ***
+22 - end_date, mesmo caso que o anterior ***
 23 - children_count,  suponho ser a contagem de comentários ou artigos sublocados.
 24 - accept_comments, suponho ser boleana para aceitar comentarios ou nao
 25 - reference_article_id, apenas dois valores nao None, nao sei o que seja.
-26 - setting, opções do artigo
+26 - setting, opções do artigo ??
 27 - notify_comments, quase tudo True, alguns False
-28 - hits, suponho ser o numero de visitas recebidas pelo artigo.
+28 - hits, suponho ser o numero de visitas recebidas pelo artigo. ***
 29 - published_at, campo datetime para cada um. ***
 30 - source, tudo None ou string vazia
 31 - highlighted, quase tudo False, alguns True
@@ -118,7 +118,7 @@ tabela articles
 37 - source_name, tudo None ou string vazia
 38 - license_id, menos de 0,5% possui uma id de licensa, mas acontece com Blog, Forum e TinyMceArticle
 39 - image_id, para os casos de imagem.
-40 - position, inteiros presentes somente no caso de 'CommunityTrackPlugin::Step'
+40 - position, inteiros presentes somente no caso de 'CommunityTrackPlugin::Step' ***
 
 ===========
 

@@ -86,39 +86,81 @@ class ParticipabrPublishing(TranslationPublishing):
         #P.add(triples,self.translation_graph)
         c("finished profiles add to rdflib graph")
         triples=[]
-        for profile_id,published,id_,type_,body,abstract,created_at,updated_at,published_at in\
-        self.articles_table.getMany(("profile_id","published","id","type","body","abstract","created_at","updated_at","published_at")):
+        for profile_id,published,id_,type_,body,abstract,creaed_at,updated_at,published_at,hits,start_date,end_date,parent_id,position in\
+        self.articles_table.getMany(("profile_id","published","id","type","body","abstract","created_at","updated_at","published_at","hits","start_date","end_date","parent_id","position")):
             identifier=self.profileids[profile_id]
             #c(identifier)
             participanturi=po.Participant+"#"+self.snapshotid+"-"+identifier
             #assert P.get(participanturi,po.name,context=self.translation_graph)
             #c(participanturi)
-            articleuri=P.rdf.ic(po.Article,self.snapshotid+"-"+str(id_),self.translation_graph,self.snapshoturi)
+            type__=type_.split("::")[-1]
+            articleuri=P.rdf.ic(eval("po."+type__),self.snapshotid+"-"+str(id_),self.translation_graph,self.snapshoturi)
             assert isinstance(created_at,datetime.datetime)
             assert isinstance(updated_at,datetime.datetime)
             assert isinstance(published_at,datetime.datetime)
             triples+=[
+                     (articleuri,a,po.Article),
                      (articleuri,po.author,participanturi),
                      (articleuri,po.createdAt,created_at),
                      (articleuri,po.updatedAt,updated_at),
                      (articleuri,po.publishedAt,published_at),
                      (articleuri,po.published,published),
+                     (articleuri,po.hits,hits),
                      ]
             if not body or body.startswith("---") or body=='<p>artigo filho</p>' or body.strip().count(" ")<2:
                 body=""
             if body:
-                c("body:",body)
+#                c("body:",body)
                 if re.findall(r"<(.*)>(.*)<(.*)>",body,re.S):
                     rawbody=BeautifulSoup(body, 'html.parser').get_text()
                     triples+=[
                              (articleuri,po.htmlBodyText,body),
-                             (articleuri,po.rawBodyText,body),
+                             (articleuri,po.cleanBodyText,body),
                              ]
                 else:
                     triples+=[
-                             (articleuri,po.rawBodyText,body),
+                             (articleuri,po.cleanBodyText,body),
                              ]
                 self.bodies+=[body]
+            if abstract:
+                if re.findall(r"<(.*)>(.*)<(.*)>",abstract,re.S):
+                    rawbody=BeautifulSoup(abstract, 'html.parser').get_text()
+                    triples+=[
+                             (articleuri,po.htmlAbstractText,body),
+                             (articleuri, po.cleanAbstractText,body),
+                             ]
+                else:
+                    triples+=[
+                             (articleuri,po.cleanAbstractText,body),
+                             ]
+            if parent_id:
+                type2__=self.articletypes[parent_id].split("::")[-1]
+                articleuri2=P.rdf.ic(eval("po."+type2__),self.snapshotid+"-"+str(parent_id),self.translation_graph,self.snapshoturi)
+                triples+=[
+                         (articleuri,po.parent,articleuri2),
+                         ]
+                if type__=="Step":
+                    assert isinstance(position,int)
+                    triples+=[
+                             (articleuri,po.stepOf,articleuri2),
+                             (articleuri,po.position,position),
+                             ]
+                elif type__=="Mediation":
+                    triples+=[
+                             (articleuri,po.mediationOf,articleuri2),
+                             ]
+            if start_date:
+                #assert isinstance(start_date,datetime.datetime)
+                assert isinstance(start_date,datetime.date)
+                triples+=[
+                         (articleuri,po.startAt,start_date),
+                         ]
+            if end_date:
+                #assert isinstance(end_date,datetime.datetime)
+                assert isinstance(end_date,datetime.date)
+                triples+=[
+                         (articleuri,po.endAt,end_date),
+                         ]
             continue
         c("finished triplification of articles")
         return
@@ -227,6 +269,7 @@ class ParticipabrPublishing(TranslationPublishing):
             exec("{}_table=DataTable({},{})".format(table,table+"_values",table+"_names"))
         emails=dict(locals()["users_table"].getMany(("login","email")))
         profileids=dict(locals()["profiles_table"].getMany(("id","identifier")))
+        articletypes=dict(locals()["articles_table"].getMany(("id","type")))
         
         #emails=users_table.getMany(("email","login")) # ??? WHY WONT THIS WORK?? TTM
         locals_=locals().copy(); del locals_["self"]
