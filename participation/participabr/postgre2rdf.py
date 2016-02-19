@@ -9,56 +9,9 @@ class ParticipabrPublishing(TranslationPublishing):
     def __init__(self,postgresql_cursor):
         snapshoturi=P.rdf.ic(po.ParticipabrSnapshot,self.snapshotid,self.translation_graph)
         P.add((snapshoturi,a,po.Snapshot),context=self.translation_graph)
-
         cur=postgresql_cursor
-        cur.execute('SELECT * FROM users')
-        users = cur.fetchall()
-        cur.execute('SELECT * FROM profiles')
-        profiles = cur.fetchall()
-        cur.execute('SELECT * FROM articles')
-        articles = cur.fetchall()
-        cur.execute('SELECT * FROM comments')
-        comments = cur.fetchall()
-        cur.execute('SELECT * FROM friendships')
-        friendships= cur.fetchall()
-        cur.execute('SELECT * FROM votes')
-        votes= cur.fetchall()
-        cur.execute('SELECT * FROM tags')
-        tags= cur.fetchall()
-        cur.execute('SELECT * FROM taggings')
-        taggings= cur.fetchall()
-
-        # nome das colunas nas tabelas
-        cur.execute("select column_name from information_schema.columns where table_name='users';")
-        UN=cur.fetchall()
-        UN=[i[0] for i in UN[::-1]]
-        cur.execute("select column_name from information_schema.columns where table_name='profiles';")
-        PN=cur.fetchall()
-        PN=[i[0] for i in PN[::-1]]
-        cur.execute("select column_name from information_schema.columns where table_name='articles';")
-        AN=cur.fetchall()
-        AN=[i[0] for i in AN[::-1]]
-        cur.execute("select column_name from information_schema.columns where table_name='comments';")
-        CN=cur.fetchall()
-        CN=[i[0] for i in CN[::-1]]
-        cur.execute("select column_name from information_schema.columns where table_name='friendships';")
-        FRN=cur.fetchall()
-        FRN=[i[0] for i in FRN[::-1]]
-        cur.execute("select column_name from information_schema.columns where table_name='votes';")
-        VN=cur.fetchall()
-        VN=[i[0] for i in VN[::-1]]
-        cur.execute("select column_name from information_schema.columns where table_name='tags';")
-        TN=cur.fetchall()
-        TN=[i[0] for i in TN[::-1]]
-        cur.execute("select column_name from information_schema.columns where table_name='taggings';")
-        TTN=cur.fetchall()
-        TTN=[i[0] for i in TTN[::-1]]
-
-        locals_=locals().copy(); del locals_["self"]
-        for i in locals_:
-            exec("self.{}={}".format(i,i))
+        self.getData(cur)
         self.translateToRdf()
-
     def translateToRdf(self):
         triples=[]
         for pp in self.profiles:
@@ -71,8 +24,7 @@ class ParticipabrPublishing(TranslationPublishing):
             if q=="Person":
                 G(ind,rdf.type,opa.Participant)
                 G( ind,opa.mbox,U("mailto:%s"%(Qu("email"),)) )
-            elif q=="Community":
-                G(ind,rdf.type,opa.Group)
+            elif q=="Community": G(ind,rdf.type,opa.Group)
             else:
                 G(ind,rdf.type,opa.Organization)
             
@@ -210,6 +162,44 @@ class ParticipabrPublishing(TranslationPublishing):
             art=opa.Article+"#"+str(tt[2])
             G(tfr,opa.article,art)
             G(tfr,opa.created,L(tt[4],xsd.dateTime))
+    def getData(self,cur):
+        cur.execute('SELECT * FROM users')
+        users = cur.fetchall()
+        cur.execute('SELECT * FROM profiles')
+        profiles = cur.fetchall()
+        cur.execute('SELECT * FROM articles')
+        articles = cur.fetchall()
+        cur.execute('SELECT * FROM comments')
+        comments = cur.fetchall()
+        cur.execute('SELECT * FROM friendships')
+        friendships= cur.fetchall()
+        cur.execute('SELECT * FROM votes')
+        votes= cur.fetchall()
+        cur.execute('SELECT * FROM tags')
+        tags= cur.fetchall()
+        cur.execute('SELECT * FROM taggings')
+        taggings= cur.fetchall()
+
+        # nome das colunas nas tabelas
+        cur.execute("select column_name from information_schema.columns where table_name='users';")
+        users_columns=[i[0] for i in cur.fetchall()[::-1]]
+        cur.execute("select column_name from information_schema.columns where table_name='profiles';")
+        profiles_columns=[i[0] for i in cur.fetchall()[::-1]]
+        cur.execute("select column_name from information_schema.columns where table_name='articles';")
+        articles_columns=[i[0] for i in cur.fetchall()[::-1]]
+        cur.execute("select column_name from information_schema.columns where table_name='comments';")
+        comments_columns=[i[0] for i in cur.fetchall()[::-1]]
+        cur.execute("select column_name from information_schema.columns where table_name='friendships';")
+        friendships_columns=[i[0] for i in cur.fetchall()[::-1]]
+        cur.execute("select column_name from information_schema.columns where table_name='votes';")
+        votes_columns=[i[0] for i in cur.fetchall()[::-1]]
+        cur.execute("select column_name from information_schema.columns where table_name='tags';")
+        tags_columns=[i[0] for i in cur.fetchall()[::-1]]
+        cur.execute("select column_name from information_schema.columns where table_name='taggings';")
+        taggings_columns=[i[0] for i in cur.fetchall()[::-1]]
+        locals_=locals().copy(); del locals_["self"]
+        for i in locals_:
+            exec("self.{}={}".format(i,i))
 
 def fparse(mstring):
     foo=[i for i in mstring.split("\n")[1:-1] if i]
