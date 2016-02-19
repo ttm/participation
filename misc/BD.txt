@@ -166,6 +166,24 @@ tabela votes
 7 - updated_at, tudo igual created_at OK
 
 =============
+
+tabela tags
+
+0 - id 
+1 - name tudo string
+2 - parent_id tudo None
+3 - pending tudo False
+
+===========
+
+tabela taggings
+
+0 - id
+1 - tag_id tudo int
+2 - taggable_id tudo int
+3 - taggable_type tudo Article
+4 - created_at
+
 Como estão registrados os grupos no BD do participa? Estão nos profiles, com o tipo "Community", mas onde estão
 os vínculos dos usuários com cada comunidade?
 Quais informações queremos a mais? Alguma podemos cortar desta disponibilização?

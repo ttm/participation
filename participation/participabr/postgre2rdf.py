@@ -172,6 +172,7 @@ class ParticipabrPublishing(TranslationPublishing):
         #P.add(triples,self.translation_graph)
         triples=[]
         for id_,title,body,created_at,source_id,reply_of_id,ip_address,author_id,referrer in self.comments_table.getMany(("id","title","body","created_at","source_id","reply_of_id","ip_address","author_id","referrer")):
+            break
             if title and title.startswith("Teste de Stress"):
                 continue
             if body.count(body[0])==len(body) or body.lower() in ("teste","testee","teste 2","texte abc") or "participabr teste" in body or (len(set(body.lower()))<3 and len(body)>2):
@@ -217,6 +218,7 @@ class ParticipabrPublishing(TranslationPublishing):
         fids=self.friendships_table.getMany(("person_id","friend_id"))
         added_friendships=[]
         for person_id, friend_id, created_at, group in self.friendships_table.getMany(('person_id','friend_id','created_at','group')):
+            break
             if [friend_id,person_id] in added_friendships:
                 pass
             else:
@@ -240,42 +242,65 @@ class ParticipabrPublishing(TranslationPublishing):
                 triples+=[
                          (friendshipuri,po.socialCircle,group),
                          ]
+        #P.add(triples,self.translation_graph)
+        commentids=set(self.comments_table.get("id"))
+        triples=[]
+        for id_,vote,voteable_id,voteable_type,voter_id,voter_type,created_at in self.votes_table.getMany(("id","vote","voteable_id","voteable_type","voter_id","voter_type","created_at")):
+            assert isinstance(id_,int)
+            assert isinstance(voteable_id,int)
+            assert isinstance(created_at,datetime.datetime)
+            voteuri=P.rdf.ic(po.Vote,self.snapshotid+"-"+str(id_),self.translation_graph,self.snapshoturi)
+            if voteable_type=="Article":
+                type__=self.articletypes[voteable_id].split("::")[-1]
+                referenceuri=eval("po."+type__)+"#"+self.snapshotid+"-"+str(voteable_id)
+            elif voteable_type=="Comment":
+                assert voteable_id in commentids
+                referenceuri=po.Comment+"#"+self.snapshotid+"-"+str(voteable_id)
+            else:
+                raise ValueError("unexpected voteable type")
+            triples+=[
+                     (voteuri,po.createdAt,created_at),
+                     (voteuri,po.vote,vote),
+                     (voteuri,po.reference,referenceuri),
+                     ]
+            if voter_id:
+                assert voter_type=="Profile"
+                assert isinstance(voter_id,int)
+                participanturi=po.Participant+'#'+self.snapshotid+"-"+self.profileids[voter_id]
+                triples+=[
+                         (voteuri,po.author,participanturi),
+                         ]
+        P.add(triples,self.translation_graph)
+        triples=[]
+        for id_,name,parent_id,pending in self.tags_table.getMany(("id","name","parent_id","pending")):
+            assert isinstance(name,str)
+            assert isinstance(id_,int)
+            assert parent_id==None
+            assert pending==False
+            taguri=P.rdf.ic(po.Tag,self.snapshotid+"-"+str(id_),self.translation_graph,self.snapshoturi)
+            triples+=[
+                     (taguri,po.name,name)
+                     ]
+        tagids=self.tags_table.get("id")
+        for id_,tag_id,taggable_id,taggable_type,created_at in self.taggings_table.getMany(('id','tag_id','taggable_id','taggable_type','created_at')):
+            assert isinstance(id_,int)
+            assert tag_id in tagids
+            assert isinstance(taggable_id,int)
+            assert isinstance(created_at,datetime.datetime)
+            assert taggable_type=="Article"
+            tagginguri=P.rdf.ic(po.Tagging,self.snapshotid+"-"+str(id_),self.translation_graph,self.snapshoturi)
+            taguri=po.Tag+"#"+self.snapshotid+"-"+str(tag_id)
+            type__=self.articletypes[taggable_id].split("::")[-1]
+            articleuri=eval("po."+type__)+"#"+self.snapshotid+"-"+str(taggable_id)
+            triples+=[
+                     (tagginguri,po.tag,taguri),
+                     (tagginguri,po.article,articleuri),
+                     (tagginguri,po.createdAt,created_at),
+                     ]
+        P.add(triples,self.translation_graph)
         return
             ### tabela comentários
         ### tabela friendships
-        AM=[]
-        for fr in friendships:
-            fid1=QF("person_id")
-            fid2=QF("friend_id")
-            am=set([fid1,fid2])
-            if am not in AM:
-                AM.append(am)
-                ind1,ind2=[(opa.Member+"#"+Q_("identifier")) for pp in profiles if pp[0] in am]
-                g.add((ind1,opa.knows,ind2))
-                tfr=opa.Friendship+"#"+("%s-%s"%tuple(am))
-                G(tfr,rdf.type,opa.Friendship)
-                G(tfr,opa.member,ind1)
-                G(tfr,opa.member,ind2)
-                G(ind1,opa.created,L(QF("created_at"),xsd.dateTime))
-
-        for voto in votes:
-            tfr=opa.Vote+"#"+str(voto[0])
-            G(tfr,rdf.type,opa.Vote)
-            G(tfr,opa.polarity,L(voto[1],xsd.boolean))
-            if voto[3]=="Comment":
-                uri=opa.Comment+"#"+str(voto[2])
-            else:
-                uri=opa.Article+"#"+str(voto[2])
-            if voto[4]:
-                ind=[(opa.Member+"#"+Q_("identifier")) for pp in profiles if pp[0]==voto[4]][0]
-                G(tfr,opa.voter,ind)
-            G(tfr,opa.created,L(voto[6],xsd.dateTime))
-
-        for tag in tags:
-            tfr=opa.Tag+"#"+str(tag[0])
-            G(tfr,rdf.type,opa.Tag)
-            G(tfr,opa.name,L(tag[1],xsd.string))
-
         for tt in taggings:
             tfr=opa.Tagging+"#"+str(tt[0])
             G(tfr,rdf.type,opa.Tagging)
