@@ -27,7 +27,7 @@ class ParticipabrPublishing(TranslationPublishing):
         snapshoturi=P.rdf.ic(po.ParticipabrSnapshot,self.snapshotid,self.translation_graph)
         P.add((snapshoturi,a,po.Snapshot),context=self.translation_graph)
         cur=postgresql_cursor
-        datas=[]; bodies=[]
+        datas2=[]; datas=[]; bodies=[]
         locals_=locals().copy(); del locals_["self"]
         for i in locals_:
             exec("self.{}={}".format(i,i))
@@ -86,8 +86,9 @@ class ParticipabrPublishing(TranslationPublishing):
         #P.add(triples,self.translation_graph)
         c("finished profiles add to rdflib graph")
         triples=[]
-        for profile_id,published,id_,type_,body,abstract,creaed_at,updated_at,published_at,hits,start_date,end_date,parent_id,position in\
-        self.articles_table.getMany(("profile_id","published","id","type","body","abstract","created_at","updated_at","published_at","hits","start_date","end_date","parent_id","position")):
+        for profile_id,published,id_,type_,body,abstract,creaed_at,updated_at,published_at,hits,start_date,end_date,parent_id,position,path,setting in\
+        self.articles_table.getMany(("profile_id","published","id","type","body","abstract","created_at","updated_at","published_at","hits","start_date","end_date","parent_id","position","path","setting")):
+            break
             identifier=self.profileids[profile_id]
             #c(identifier)
             participanturi=po.Participant+"#"+self.snapshotid+"-"+identifier
@@ -106,6 +107,7 @@ class ParticipabrPublishing(TranslationPublishing):
                      (articleuri,po.publishedAt,published_at),
                      (articleuri,po.published,published),
                      (articleuri,po.hits,hits),
+                     (articleuri,po.path,path),
                      ]
             if not body or body.startswith("---") or body=='<p>artigo filho</p>' or body.strip().count(" ")<2:
                 body=""
@@ -161,39 +163,17 @@ class ParticipabrPublishing(TranslationPublishing):
                 triples+=[
                          (articleuri,po.endAt,end_date),
                          ]
+            if setting:
+                data2_,triples2_=parseData(setting,articleuri)
+                triples+=triples2_
+                self.datas2+=[(data2_,setting)]
             continue
         c("finished triplification of articles")
+        for id_,title,body,created_at,reply_of_id,ip_address in self.comments_table.getMany(("id","title","body","created_at","reply_of_id","ip_address")):
+            pass
         return
-            ### tabela artigos
-        for banana in ba:
-            for aa in AA:
-                    tipo=QA("type")
-                    G(ART,opa.atype,L(tipo,xsd.string))
-                    if sum([foo in tipo for foo in ["::","Article","Event","Blog"]]):
-                        name=QA("name")
-                        if name !="Blog":
-                            G(ART,opa.title,L(name,xsd.string))
-                        if tipo=='CommunityTrackPlugin::Track':
-                            G(ART,opa.atype,opa.ParticipationTrack)
-                        if tipo=='CommunityTrackPlugin::Step':
-                            G(ART,opa.atype,opa.ParticipationStep)
-                            pid=QA("parent_id")
-                            aa2=[xx for xx in articles if xx[AN.index("id")]==pid][0]
-                            pid=aa2[AN.index("profile_id")]  # o pid é o mesmo sempre!
-                            pp2=[xx for xx in profiles if xx[PN.index("id")]==pid][0]
-                            ART2 = opa.Article+"#"+str(aa2[AN.index("id")])
-                            G(ART2,opa.hasStep,ART)
-                    body=QA("body")
-                    if (body!=None) and ( not body.startswith("--- ")):
-                        G(ART,opa.body,L(remove_tags(body),xsd.string) )
-                    abst=QA("abstract")
-                    if abst:
-                        G( ART,opa.abstract,L(remove_tags(abst),xsd.string) )
-                    G(ART,opa.created,L( QA("created_at"),xsd.dateTime))
-                    G(ART,opa.modified,L(QA("updated_at"),xsd.dateTime))
-                    G(ART,opa.published,L(QA("published_at"),xsd.dateTime))
-
             ### tabela comentários
+        for banana in feijao:
             CC=[i for i in comments if i[CN.index("author_id")]==profile_id]
             for cc in CC:
                 COM=opa.Comment+"#"+str(QC("id"))
@@ -315,7 +295,7 @@ datafields={'acronym',
  'subOrganizationsPluginParentToBe',
  'tagList',
  'zipCode'}
-def parseData(datastring,participanturi):
+def parseData(datastring,participanturi,setting=False):
     #candidates=datastring.split("\n")
     countries=babel.Locale("pt").territories
     candidates=re.findall(r":(.*?): (.*)",datastring)
@@ -342,27 +322,27 @@ def parseData(datastring,participanturi):
             #value_=codecs.decode(value,"unicode_escape").encode("utf8").decode("latin1")
             value_=codecs.decode(value,"unicode_escape").encode("latin1").decode("utf8")
             field_=re.sub(r"_(.)",lambda m: m.groups()[0].upper(),field)
-            assert field_ in datafields
+#            assert field_ in datafields
             if field_ in allowed:
                 pass
             elif field_=="addressReference" and (value_=="não tem" or value_.count("x")==len(value_)):
                 continue
             elif field_=="zipCode" and (len(value_)==1 or value_=="não tem"):
                 continue
-            if field_=="tagList":
+            elif field_=="tagList":
                 field_="subjectMatter"
-            if field_=="state" and "binary" in value_:
+            elif field_=="state" and "binary" in value_:
                 continue
-            if field_=="allowUnauthenticatedComments":
+            elif field_=="allowUnauthenticatedComments":
                 value_=bool(value_)
-            if field_=="organization" and \
+            elif field_=="organization" and \
             (value_.count("-")==len(value_) or value_.count("0")==len(value_) or value_.count(".")==len(value_) or value_.count("*")==len(value_)  or value_.count("?")==len(value_) or "binary" in value_ or "não tem"==value_):
                 continue
-            if field_=="district" and (value_.count("-")==len(value_) or "binary" in value_ or "não tem"==value_):
+            elif field_=="district" and (value_.count("-")==len(value_) or "binary" in value_ or "não tem"==value_):
                 continue
-            if field_=="city" and (value_.count("-")==len(value_)):
+            elif field_=="city" and (value_.count("-")==len(value_)):
                 continue
-            if field_=="country":
+            elif field_=="country":
                 if value_ in countries:
                     value_=countries[value_]
                 elif value_.title() in countries.values():
@@ -381,6 +361,20 @@ def parseData(datastring,participanturi):
                         triples+=[
                                  (participanturi,po.country,country),
                                  ]
+            if setting:
+                if field_ in {"visualizationFOrmat","twitterConsumerKey","postsPerPage","displayHits","twitterConsumerSecret","displayPostsInCurrentLanguage","twitterAccessToken","twitterAccessTokenSecret","publishSubmissions","followers","displayVersions"}:
+                    continue
+                elif field_=="hashtagsTwitter":
+                    field_="twitterHashtags"
+                if field_=="twitterHashtags":
+                    hashtags=value_.split(",")
+                    for hashtag in hashtags:
+                        triples+=[
+                                 (participanturi,po.hashtag,hashtag.strip()),
+                                 ]
+                    continue
+            if value_ in ('true','false'):
+                value_=(False,True)[value_=='true']
             triples+=[
                      (participanturi,eval("po."+field_),value_),
                      ]
