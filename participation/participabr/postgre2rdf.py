@@ -1,6 +1,21 @@
-import percolation as P, rdflib as r, urllib
+import percolation as P, rdflib as r, urllib, datetime, re, codecs
 from percolation.rdf import NS,po,a,c
 from percolation.rdf.publishing import TranslationPublishing
+import babel
+
+class DataTable:
+    def __init__(self,data_values,column_names):
+        """data_values is an iterable of iterables, column_names is an iterable"""
+        locals_=locals().copy(); del locals_["self"]
+        for i in locals_:
+            exec("self.{}={}".format(i,i))
+    def get(self,column_name):
+        index=self.column_names.index(column_name)
+        return [i[index] for i in self.data_values]
+    def getMany(self,column_names):
+        indexes=[self.column_names.index(i) for i in column_names]
+        return [[i[index] for index in indexes] for i in self.data_values]
+
 
 class ParticipabrPublishing(TranslationPublishing):
     snapshotid="participabr-legacy"
@@ -10,59 +25,53 @@ class ParticipabrPublishing(TranslationPublishing):
         snapshoturi=P.rdf.ic(po.ParticipabrSnapshot,self.snapshotid,self.translation_graph)
         P.add((snapshoturi,a,po.Snapshot),context=self.translation_graph)
         cur=postgresql_cursor
+        datas=[]
+        locals_=locals().copy(); del locals_["self"]
+        for i in locals_:
+            exec("self.{}={}".format(i,i))
         self.getData(cur)
         self.translateToRdf()
     def translateToRdf(self):
         triples=[]
-        for pp in self.profiles:
+
+        for identifier,name,type_,visible,public_profile,lat,lng,created_at,updated_at,data,id_\
+        in self.profiles_table.getMany(["identifier","name","type","visible","public_profile","lat","lng","created_at","updated_at","data","id"]):
             ### tabela profiles
-            return
-            ind=opa.Member+"#"+Q_("identifier")
-            G(ind,rdf.type,opa.Member)
-            G( ind,opa.name, L(Q("name"),xsd.string) )
-            q=Q("type")
-            if q=="Person":
-                G(ind,rdf.type,opa.Participant)
-                G( ind,opa.mbox,U("mailto:%s"%(Qu("email"),)) )
-            elif q=="Community": G(ind,rdf.type,opa.Group)
-            else:
-                G(ind,rdf.type,opa.Organization)
-            
-            G(ind,opa.visibleProfile, L(Q("visible"),xsd.boolean) )
-            G(ind,opa.publicProfile, L(Q("public_profile"),xsd.boolean))
-            if Q("lat") and Q("lng"):
-                lugar=r.BNode()
-                G(lugar,rdf.type,opa.Point )
-                G(ind, opa.based_near, lugar )
-                G(lugar,opa.lat, L(Q("lat"),xsd.float))
-                G(lugar,opa.long,L(Q("lng"),xsd.float))
-
-            G(ind,opa.created,L(Q("created_at"),xsd.dateTime))
-            G(ind,opa.modified,L(Q("updated_at"),xsd.dateTime))
-            # campo composto
-            campos=fparse(Q("data"))
-            if "city" in campos.keys():
-                cid=campos["city"]
-                if cid:
-                    G(ind,opa.city,L(cid,xsd.string))
-            if "country" in campos.keys():
-                cid=campos["country"]
-                if cid:
-                    G(ind,opa.country,L(cid,xsd.string))
-            if "state" in campos.keys():
-                cid=campos["state"]
-                if cid:
-                    G(ind,opa.state,L(cid,xsd.string))
-            if "professional_activity" in campos.keys():
-                cid=campos["professional_activity"]
-                if cid:
-                    G(ind,opa.professionalActivity,L(cid,xsd.string))
-            if "organization" in campos.keys():
-                cid=campos["organization"]
-                if cid:
-                    G(ind,opa.organization,L(cid,xsd.string))
-
-
+            assert identifier.islower() or identifier.isdigit()
+            participanturi=P.rdf.ic(po.Participant,self.snapshotid+"-"+identifier,self.translation_graph,self.snapshoturi)
+            c(identifier)
+            assert bool(name)
+            assert type_ in ("Person","Community","Enterprise")
+            assert visible in (False,True)
+            assert public_profile in (False,True)
+            assert isinstance(created_at,datetime.datetime)
+            assert isinstance(updated_at,datetime.datetime)
+            triples=[
+                    (participanturi,po.name,name),
+                    (participanturi,a,eval("po."+type_)),
+                    (participanturi,po.visibleProfile,visible),
+                    (participanturi,po.publicProfile,public_profile),
+                    (participanturi,po.createdAt,created_at),
+                    (participanturi,po.updatedAt,created_at),
+                    ]
+            assert isinstance(lat,(type(None),float))
+            assert isinstance(lng,(type(None),float))
+            assert type(lat)==type(lng)
+            if lat:
+                place=r.BNode()
+                triples+=[
+                        (participanturi,po.basedNear,place),
+                        (place,po.latitude,lat),
+                        (place,po.longitude,lng),
+                        ]
+            data_,triples_=parseData(data,participanturi)
+            triples+=triples_
+            for field in data_:
+                triples+=[
+                         (participanturi,eval("po."+field),data_[field])
+                         ]
+            self.datas+=[(data_,data)]
+            continue
             ### tabela artigos
             profile_id=Q("id")
             AA=[i for i in articles if i[AN.index("profile_id")]==profile_id]
@@ -119,7 +128,7 @@ class ParticipabrPublishing(TranslationPublishing):
                         G(turi , opa.hasReply , COM )
 
                     G(COM,opa.ip,L(QC("ip_address"),xsd.string))
-
+        return
         ### tabela friendships
         AM=[]
         for fr in friendships:
@@ -163,40 +172,14 @@ class ParticipabrPublishing(TranslationPublishing):
             G(tfr,opa.article,art)
             G(tfr,opa.created,L(tt[4],xsd.dateTime))
     def getData(self,cur):
-        cur.execute('SELECT * FROM users')
-        users = cur.fetchall()
-        cur.execute('SELECT * FROM profiles')
-        profiles = cur.fetchall()
-        cur.execute('SELECT * FROM articles')
-        articles = cur.fetchall()
-        cur.execute('SELECT * FROM comments')
-        comments = cur.fetchall()
-        cur.execute('SELECT * FROM friendships')
-        friendships= cur.fetchall()
-        cur.execute('SELECT * FROM votes')
-        votes= cur.fetchall()
-        cur.execute('SELECT * FROM tags')
-        tags= cur.fetchall()
-        cur.execute('SELECT * FROM taggings')
-        taggings= cur.fetchall()
-
-        # nome das colunas nas tabelas
-        cur.execute("select column_name from information_schema.columns where table_name='users';")
-        users_columns=[i[0] for i in cur.fetchall()[::-1]]
-        cur.execute("select column_name from information_schema.columns where table_name='profiles';")
-        profiles_columns=[i[0] for i in cur.fetchall()[::-1]]
-        cur.execute("select column_name from information_schema.columns where table_name='articles';")
-        articles_columns=[i[0] for i in cur.fetchall()[::-1]]
-        cur.execute("select column_name from information_schema.columns where table_name='comments';")
-        comments_columns=[i[0] for i in cur.fetchall()[::-1]]
-        cur.execute("select column_name from information_schema.columns where table_name='friendships';")
-        friendships_columns=[i[0] for i in cur.fetchall()[::-1]]
-        cur.execute("select column_name from information_schema.columns where table_name='votes';")
-        votes_columns=[i[0] for i in cur.fetchall()[::-1]]
-        cur.execute("select column_name from information_schema.columns where table_name='tags';")
-        tags_columns=[i[0] for i in cur.fetchall()[::-1]]
-        cur.execute("select column_name from information_schema.columns where table_name='taggings';")
-        taggings_columns=[i[0] for i in cur.fetchall()[::-1]]
+        tables=("users",'profiles','articles','comments','friendships','votes','tags','taggings')
+        for table in tables:
+            #eval("{},{},{}=table_values,table_names,table_object")
+            cur.execute('SELECT * FROM '+table)
+            exec("{}_values=cur.fetchall()".format(table))
+            cur.execute("select column_name from information_schema.columns where table_name='{}';".format(table))
+            exec("{}_names=[i[0] for i in cur.fetchall()[::-1]]".format(table))
+            exec("{}_table=DataTable({},{})".format(table,table+"_values",table+"_names"))
         locals_=locals().copy(); del locals_["self"]
         for i in locals_:
             exec("self.{}={}".format(i,i))
@@ -217,3 +200,101 @@ def QC(mstr):
 
 def QF(mstr):
     return fr[FRN.index(mstr)]
+datafields={'acronym',
+ 'addressReference',
+ 'allowUnauthenticatedComments',
+ 'city',
+ 'closed',
+ 'contactEmail',
+ 'country',
+ 'description',
+ 'district',
+ 'enableContactUs',
+ 'fieldsPrivacy',
+ 'lastNotification',
+ 'layoutTemplate',
+ 'moderatedArticles',
+ 'notificationTime',
+ 'organization',
+ 'organizationWebsite',
+ 'professionalActivity',
+ 'redirectL10n',
+ 'state',
+ 'subOrganizationsPluginParentToBe',
+ 'tagList',
+ 'zipCode'}
+def parseData(datastring,participanturi):
+    #candidates=datastring.split("\n")
+    countries=babel.Locale("pt").territories
+    candidates=re.findall(r":(.*?): (.*)",datastring)
+    data={}
+    allowed={"acronym","contactEmail","description", "organizationWebsite","professionalActivity"}
+    process={"addressReference", # remove "não tem" and all([i.lower()=="x" for i in ar])
+            'allowUnauthenticatedComments',# bool(i)
+            'city',# all([i.lower()=="-" for i in ar])
+            "country", # babel.Locale("pt").territories
+            "district",
+            "organization",
+            "state",
+            "tagList"}
+    removed={"closed","enableContactUs","fieldsPrivacy","lastNotification","layoutTemplate","moderatedArticles","notificationTime","subOrganizationsPluginParentToBe"}
+    triples=[]
+    for field,value in candidates:
+        if value and field:
+            if re.findall(r":"+field+r": \"",datastring):
+                # field value in quotes:
+                value=re.findall(r":"+field+r': \"(.*?)\".*(?:$|:.*:.*)',datastring,re.S)[0]
+            value.strip()
+            if not value.replace("\"",""):
+                continue
+            #value_=codecs.decode(value,"unicode_escape").encode("utf8").decode("latin1")
+            value_=codecs.decode(value,"unicode_escape").encode("latin1").decode("utf8")
+            field_=re.sub(r"_(.)",lambda m: m.groups()[0].upper(),field)
+            assert field_ in datafields
+            if field_ in allowed:
+                pass
+            elif field_=="addressReference" and (value_=="não tem" or value_.count("x")==len(value_)):
+                continue
+            elif field_=="zipCode" and (len(value_)==1 or value_=="não tem"):
+                continue
+            if field_=="tagList":
+                field_="subjectMatter"
+            if field_=="state" and "binary" in value_:
+                continue
+            if field_=="allowUnauthenticatedComments":
+                value_=bool(value_)
+            if field_=="organization" and \
+            (value_.count("-")==len(value_) or value_.count("0")==len(value_) or value_.count(".")==len(value_) or value_.count("*")==len(value_)  or value_.count("?")==len(value_) or "binary" in value_ or "não tem"==value_):
+                continue
+            if field_=="district" and (value_.count("-")==len(value_) or "binary" in value_ or "não tem"==value_):
+                continue
+            if field_=="city" and (value_.count("-")==len(value_)):
+                continue
+            if field_=="country":
+                if value_ in countries:
+                    value_=countries[value_]
+                elif value_.title() in countries.values():
+                    value_=value.title()
+                elif "binary" in value_:
+                    continue
+                elif 'Av. Deodoro da Fonseca' == value_:
+                    continue
+                elif 'Usa' == value_:
+                    value_=countries["US"]
+                elif 'Países Baixos' in value_:
+                    value_="Holanda"
+                elif '/' in value_:
+                    countries=value_.split("/")
+                    for country in countries:
+                        triples+=[
+                                 (participanturi,po.country,country),
+                                 ]
+            triples+=[
+                     (participanturi,eval("po."+field_),value_),
+                     ]
+            data[field_]=value_
+    return data,triples
+    # check for all fields
+    #check for correct encodings
+    # for now: 
+
