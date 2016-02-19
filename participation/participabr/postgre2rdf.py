@@ -2,6 +2,8 @@ import percolation as P, rdflib as r, urllib, datetime, re, codecs
 from percolation.rdf import NS,po,a,c
 from percolation.rdf.publishing import TranslationPublishing
 import babel
+from validate_email import validate_email
+from bs4 import BeautifulSoup
 
 class DataTable:
     def __init__(self,data_values,column_names):
@@ -25,7 +27,7 @@ class ParticipabrPublishing(TranslationPublishing):
         snapshoturi=P.rdf.ic(po.ParticipabrSnapshot,self.snapshotid,self.translation_graph)
         P.add((snapshoturi,a,po.Snapshot),context=self.translation_graph)
         cur=postgresql_cursor
-        datas=[]
+        datas=[]; bodies=[]
         locals_=locals().copy(); del locals_["self"]
         for i in locals_:
             exec("self.{}={}".format(i,i))
@@ -36,23 +38,26 @@ class ParticipabrPublishing(TranslationPublishing):
 
         for identifier,name,type_,visible,public_profile,lat,lng,created_at,updated_at,data,id_\
         in self.profiles_table.getMany(["identifier","name","type","visible","public_profile","lat","lng","created_at","updated_at","data","id"]):
+            break
             ### tabela profiles
             assert identifier.islower() or identifier.isdigit()
             participanturi=P.rdf.ic(po.Participant,self.snapshotid+"-"+identifier,self.translation_graph,self.snapshoturi)
-            c(identifier)
+            profileuri=P.rdf.ic(po.Profile,self.snapshotid+"-"+str(id_),self.translation_graph,self.snapshoturi)
+            #c(identifier)
             assert bool(name)
             assert type_ in ("Person","Community","Enterprise")
             assert visible in (False,True)
             assert public_profile in (False,True)
             assert isinstance(created_at,datetime.datetime)
             assert isinstance(updated_at,datetime.datetime)
-            triples=[
+            triples+=[
                     (participanturi,po.name,name),
                     (participanturi,a,eval("po."+type_)),
-                    (participanturi,po.visibleProfile,visible),
-                    (participanturi,po.publicProfile,public_profile),
-                    (participanturi,po.createdAt,created_at),
-                    (participanturi,po.updatedAt,created_at),
+                    (participanturi,po.profile,profileuri),
+                    (profileuri,po.visible,visible),
+                    (profileuri,po.public,public_profile),
+                    (profileuri,po.createdAt,created_at),
+                    (profileuri,po.updatedAt,updated_at),
                     ]
             assert isinstance(lat,(type(None),float))
             assert isinstance(lng,(type(None),float))
@@ -71,15 +76,55 @@ class ParticipabrPublishing(TranslationPublishing):
                          (participanturi,eval("po."+field),data_[field])
                          ]
             self.datas+=[(data_,data)]
+            email=self.emails.get(identifier)
+            if email:
+                assert validate_email(email)
+                triples+=[
+                         (participanturi,po.email,email),
+                         ]
+        c("finished triplification of profiles")
+        #P.add(triples,self.translation_graph)
+        c("finished profiles add to rdflib graph")
+        triples=[]
+        for profile_id,published,id_,type_,body,abstract,created_at,updated_at,published_at in\
+        self.articles_table.getMany(("profile_id","published","id","type","body","abstract","created_at","updated_at","published_at")):
+            identifier=self.profileids[profile_id]
+            #c(identifier)
+            participanturi=po.Participant+"#"+self.snapshotid+"-"+identifier
+            #assert P.get(participanturi,po.name,context=self.translation_graph)
+            #c(participanturi)
+            articleuri=P.rdf.ic(po.Article,self.snapshotid+"-"+str(id_),self.translation_graph,self.snapshoturi)
+            assert isinstance(created_at,datetime.datetime)
+            assert isinstance(updated_at,datetime.datetime)
+            assert isinstance(published_at,datetime.datetime)
+            triples+=[
+                     (articleuri,po.author,participanturi),
+                     (articleuri,po.createdAt,created_at),
+                     (articleuri,po.updatedAt,updated_at),
+                     (articleuri,po.publishedAt,published_at),
+                     (articleuri,po.published,published),
+                     ]
+            if not body or body.startswith("---") or body=='<p>artigo filho</p>' or body.strip().count(" ")<2:
+                body=""
+            if body:
+                c("body:",body)
+                if re.findall(r"<(.*)>(.*)<(.*)>",body,re.S):
+                    rawbody=BeautifulSoup(body, 'html.parser').get_text()
+                    triples+=[
+                             (articleuri,po.htmlBodyText,body),
+                             (articleuri,po.rawBodyText,body),
+                             ]
+                else:
+                    triples+=[
+                             (articleuri,po.rawBodyText,body),
+                             ]
+                self.bodies+=[body]
             continue
+        c("finished triplification of articles")
+        return
             ### tabela artigos
-            profile_id=Q("id")
-            AA=[i for i in articles if i[AN.index("profile_id")]==profile_id]
+        for banana in ba:
             for aa in AA:
-                if QA("published") and Q("public_profile"):
-                    ART = opa.Article+"#"+str(QA("id"))
-                    G(ART,rdf.type,opa.Article)
-                    G(ART,opa.publisher,ind)
                     tipo=QA("type")
                     G(ART,opa.atype,L(tipo,xsd.string))
                     if sum([foo in tipo for foo in ["::","Article","Event","Blog"]]):
@@ -180,6 +225,10 @@ class ParticipabrPublishing(TranslationPublishing):
             cur.execute("select column_name from information_schema.columns where table_name='{}';".format(table))
             exec("{}_names=[i[0] for i in cur.fetchall()[::-1]]".format(table))
             exec("{}_table=DataTable({},{})".format(table,table+"_values",table+"_names"))
+        emails=dict(locals()["users_table"].getMany(("login","email")))
+        profileids=dict(locals()["profiles_table"].getMany(("id","identifier")))
+        
+        #emails=users_table.getMany(("email","login")) # ??? WHY WONT THIS WORK?? TTM
         locals_=locals().copy(); del locals_["self"]
         for i in locals_:
             exec("self.{}={}".format(i,i))
