@@ -370,8 +370,9 @@ datafields={'acronym',
  'zipCode'}
 def parseData(datastring,participanturi,setting=False):
     #candidates=datastring.split("\n")
+    datastring=codecs.decode(datastring,"unicode_escape").encode("latin1").decode("utf8")
     countries=babel.Locale("pt").territories
-    candidates=re.findall(r":(.*?): (.*)",datastring)
+    candidates=re.findall(r":(.*?): (.*)",datastring,re.S)
     data={}
     allowed={"acronym","contactEmail","description", "organizationWebsite","professionalActivity"}
     process={"addressReference", # remove "não tem" and all([i.lower()=="x" for i in ar])
@@ -393,7 +394,8 @@ def parseData(datastring,participanturi,setting=False):
             if not value.replace("\"",""):
                 continue
             #value_=codecs.decode(value,"unicode_escape").encode("utf8").decode("latin1")
-            value_=codecs.decode(value,"unicode_escape").encode("latin1").decode("utf8")
+            #value_=codecs.decode(value,"unicode_escape").encode("latin1").decode("utf8")
+            value_=value
             field_=re.sub(r"_(.)",lambda m: m.groups()[0].upper(),field)
 #            assert field_ in datafields
             if field_ in allowed:

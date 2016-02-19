@@ -184,6 +184,72 @@ tabela taggings
 3 - taggable_type tudo Article
 4 - created_at
 
+==========
+
+tabela pairwise_plugin_choices
+
+tudo vazio. Campos:
+
+0 - id
+1 - choice_id
+2 - parent_choice_id
+3 - question_id
+4 - user_id
+5 - created_at
+6 - updated_at
+
+===========
+
+tabela units
+
+tudo vazio. Campos:
+
+0 - id
+1 - singular
+2 - plural
+3 - position
+4 - environment_id
+
+===========
+
+tabela inputs 
+
+tudo vazio. Campos:
+
+0 - id
+1 - product_id
+2 - product_category_id
+3 - created_at
+4 - updated_at
+5 - position
+6 - price_per_unit
+7 - amount_used
+8 - relevant_to_price
+9 - is_from_solidarity_economy
+10 - unit_id
+
+===========
+
+tabela tasks
+
+8106 entradas
+
+0 - id
+1 - data, 7807 campos compostos, 924 são só '--- {}\n\n', outros X são só X campos vazios, são X campos de dados úteis, com estas chaves: 
+2 - status
+3 - end_date
+4 - requestor_id
+5 - target_id
+6 - code
+7 - type
+8 - created_at
+9 - target_type
+10 - image_id
+11 - spam
+
+
+
+
 Como estão registrados os grupos no BD do participa? Estão nos profiles, com o tipo "Community", mas onde estão
 os vínculos dos usuários com cada comunidade?
 Quais informações queremos a mais? Alguma podemos cortar desta disponibilização?
