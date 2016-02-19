@@ -85,7 +85,7 @@ tabela articles
 4 - parent_id, pouco mais de 1/3 dos artigos possuem um parent_id, que talvez seja id de algum meta artigo, não sei. Todo parent id está no id.
 5 - body, existem campos vazios, com None, que comecam com "--- ", e os que posseum informacao valida ***
 6 - abstract, há vazios "" e com None e com info real ***
-7 - profile_id,
+7 - profile_id, *** para referenciar a autoria TTM ???
 8 - updated_at, campo datetime ***
 9 - created_at, campo datetime ***
 10 - last_changed_by_id, None ou inteiro, que nunca bate com o profile_id, portanto parece ser somente para o caso de um usuário diferente alterar o artigo *******
@@ -100,6 +100,7 @@ tabela articles
 19 - advertise, boleana que suponho ser usado para marcar artigos que devem ser difundidos ou nos quais propagandas devem ser veiculadas.
 20 - published, booleana, para o caso de artigos publicados.
 21 - start_date, presente em 2 casos: eventos e 'CommunityTrackPlugin::Step' ***
+t title.startswith("Teste de Stress") andnot title.startswith("Teste de Stress") and
 22 - end_date, mesmo caso que o anterior ***
 23 - children_count,  suponho ser a contagem de comentários ou artigos sublocados.
 24 - accept_comments, suponho ser boleana para aceitar comentarios ou nao
@@ -127,18 +128,19 @@ tabela comments
 0 - ids de 22 a 24k
 1 - title, uma boa parte é "teste de stress" e há "" como título vazio ***
 2 - body, ok, sempre tem body ***
-3 - source ID, creio ser o ID do post/artigo ou do comentário ao qual o comentário é feito
-4 - author id, creio ser o profile id do autor (n o user id)
+3 - source_id, creio ser o ID do post/artigo ou do comentário ao qual o comentário é feito, apenas 3 não constam no profiles.id
+4 - author_id, creio ser o profile id do autor (n o user id) *** Verificar se é mesmo users.id
 5 - name, campo ou com None ou com string vazia ""
 6 - email, ou com None ou com string vazia ""
 7 - created_at, com a data e hora certinho da criação do comentário ***
 8 - reply_of_id, quase tudo None, mas 195 itens possuem id específica, talvez procurar no código do noosfero. Talvez sejam comentários. Nao bate com o source ID, por onde pode-se supor que sejam as ids dos comentarios aos quais sao reply. ***
 9 - ip_address, todo comentário tem um IP, por onde podemos observar coordenadas geográficas. ***
-10 - spam, 1% não True, não parece adicionar informação
+10 - spam, 1% não True, não parece adicionar ter coerência o True, False e None.
 11 - source_type, quase tudo "Article", mas também 8 "ActionTracker::Record".
 12 - user_agent, prove do browser e sistema operacional usado para fazer o comment. Interessante, mas deixado de lado por enquanto.
 13 - referrer, links que parecem ser todos para páginas do participa no qual estah o comentário *****
 14 - group_id, 1/4 dos comentários possuem uma ID aqui. Após inspeção, não consegui saber a que esta ID se refere.
+15 - setting, soh tem profile_picture, ignorado por hora.
 
 ============
 

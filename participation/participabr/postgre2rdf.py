@@ -1,4 +1,4 @@
-import percolation as P, rdflib as r, urllib, datetime, re, codecs
+import percolation as P, rdflib as r, urllib, datetime, re, codecs, rfc3986
 from percolation.rdf import NS,po,a,c
 from percolation.rdf.publishing import TranslationPublishing
 import babel
@@ -169,33 +169,79 @@ class ParticipabrPublishing(TranslationPublishing):
                 self.datas2+=[(data2_,setting)]
             continue
         c("finished triplification of articles")
-        for id_,title,body,created_at,reply_of_id,ip_address in self.comments_table.getMany(("id","title","body","created_at","reply_of_id","ip_address")):
-            pass
+        #P.add(triples,self.translation_graph)
+        triples=[]
+        for id_,title,body,created_at,source_id,reply_of_id,ip_address,author_id,referrer in self.comments_table.getMany(("id","title","body","created_at","source_id","reply_of_id","ip_address","author_id","referrer")):
+            if title and title.startswith("Teste de Stress"):
+                continue
+            if body.count(body[0])==len(body) or body.lower() in ("teste","testee","teste 2","texte abc") or "participabr teste" in body or (len(set(body.lower()))<3 and len(body)>2):
+                continue
+            commenturi=P.rdf.ic(po.Comment,self.snapshotid+"-"+str(id_),self.translation_graph,self.snapshoturi)
+            assert isinstance(created_at,datetime.datetime)
+            assert isinstance(body,str) and not re.findall(r"<.*>.*<.*>",body)
+            assert isinstance(source_id,int)
+            if source_id not in self.articletypes:
+                articleclass=po.Article
+            else:
+                articleclass=eval("po."+self.articletypes[source_id].split("::")[-1])
+            articleuri=P.rdf.ic(articleclass,self.snapshotid+"-"+str(source_id),self.translation_graph,self.snapshoturi)
+            triples+=[
+                    (commenturi,po.createdAt,created_at),
+                    (commenturi,po.bodyText,body),
+                    (commenturi,po.sourceArticle,articleuri),
+                    ]
+            if title and len(title)>2 and title.count(title[0])!=len(title) and not title.startswith("hub-message"):
+                triples+=[
+                         (commenturi,po.title,title)
+                         ]
+            if reply_of_id:
+                assert isinstance(reply_of_id,int)
+                commenturi0=po.Comment+"#"+self.snapshotid+"-"+str(reply_of_id)
+                triples+=[
+                         (commenturi,po.replyOf,commenturi0)
+                         ]
+            if ip_address:
+                triples+=[
+                         (commenturi,po.ipAddress,ip_address)
+                         ]
+            if author_id and author_id in self.userids:
+                participanturi=po.Participant+"#"+self.snapshotid+"-"+self.userids[author_id]
+                triples+=[
+                         (commenturi,po.author,participanturi)
+                         ]
+            if referrer:
+                assert rfc3986.is_valid_uri(referrer)
+                triples+=[
+                         (commenturi,po.url,referrer)
+                         ]
+        fids=self.friendships_table.getMany(("person_id","friend_id"))
+        added_friendships=[]
+        for person_id, friend_id, created_at, group in self.friendships_table.getMany(('person_id','friend_id','created_at','group')):
+            if [friend_id,person_id] in added_friendships:
+                pass
+            else:
+                added_friendships+=[[person_id,friend_id]]
+            id0=self.profileids[person_id]
+            id1=self.profileids[friend_id]
+            friendshipuri=P.rdf.ic(po.Friendship,self.snapshotid+'-'+id0+'-'+id1,self.translation_graph,self.snapshoturi)
+            participanturi0=po.Participant+"#"+self.snapshotid+"-"+id0
+            participanturi1=po.Participant+"#"+self.snapshotid+"-"+id1
+            assert isinstance(created_at,datetime.datetime)
+            triples+=[
+                     (friendshipuri,po.member,participanturi0),
+                     (friendshipuri,po.member,participanturi1),
+                     (friendshipuri,po.createdAt,created_at),
+                     ]
+            if [friend_id,person_id] not in fids:
+                triples+=[
+                         (participanturi0,po.knows,participanturi1),
+                         ]
+            if group:
+                triples+=[
+                         (friendshipuri,po.socialCircle,group),
+                         ]
         return
             ### tabela comentários
-        for banana in feijao:
-            CC=[i for i in comments if i[CN.index("author_id")]==profile_id]
-            for cc in CC:
-                COM=opa.Comment+"#"+str(QC("id"))
-                G(COM,rdf.type,opa.Comment)
-                G(COM,opa.creator,ind)
-                if cc[CN.index("title")]:
-                    G(COM,opa.title,L(QC("title"),xsd.string))
-                G(COM,opa.body,L(remove_tags(QC("body")),xsd.string))
-                G(COM,opa.created,L(QC("created_at"),xsd.dateTime))
-                if QC("source_type")!="ActionTracker::Record":
-                    ART=QC("referrer")
-                    if ART:
-                        ART = opa.Article+"#"+str(QC("source_id")) # VERIFICAR
-                        G(ART,opa.hasReply,COM)
-
-                    rip=str(QC("reply_of_id"))
-                    if rip:
-                        turi=opa.Comment+"#"+rip
-                        G(turi , opa.hasReply , COM )
-
-                    G(COM,opa.ip,L(QC("ip_address"),xsd.string))
-        return
         ### tabela friendships
         AM=[]
         for fr in friendships:
@@ -238,8 +284,9 @@ class ParticipabrPublishing(TranslationPublishing):
             art=opa.Article+"#"+str(tt[2])
             G(tfr,opa.article,art)
             G(tfr,opa.created,L(tt[4],xsd.dateTime))
+        # check 'pairwise_plugin_choices_related','units","inputs","tasks"
     def getData(self,cur):
-        tables=("users",'profiles','articles','comments','friendships','votes','tags','taggings')
+        tables=("users",'profiles','articles','comments','friendships','votes','tags','taggings',"votes",'pairwise_plugin_choices_related','units',"inputs","tasks")
         for table in tables:
             #eval("{},{},{}=table_values,table_names,table_object")
             cur.execute('SELECT * FROM '+table)
@@ -250,6 +297,7 @@ class ParticipabrPublishing(TranslationPublishing):
         emails=dict(locals()["users_table"].getMany(("login","email")))
         profileids=dict(locals()["profiles_table"].getMany(("id","identifier")))
         articletypes=dict(locals()["articles_table"].getMany(("id","type")))
+        userids=dict(locals()["users_table"].getMany(("id","login")))
         
         #emails=users_table.getMany(("email","login")) # ??? WHY WONT THIS WORK?? TTM
         locals_=locals().copy(); del locals_["self"]
