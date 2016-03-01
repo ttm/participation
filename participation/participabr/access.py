@@ -11,9 +11,8 @@ def remove_tags(text):
     return TAG_RE.sub('', text)
 
 
-def parseLegacyFiles(mysqldb=True, mongoshouts=True,
-                     irclog=True, oreshouts=True):
-    """Parse legacy files with aa shouts and sessions"""
+def parseLegacyFiles():
+    """Parse legacy postgresql data from paricipabr"""
     # access mysql, access mongo, access irc log from social/
     c("starting participabr access")
     con = psycopg2.connect(

@@ -5,6 +5,7 @@ import re
 import codecs
 import rfc3986
 import percolation as P
+import participation as Pa
 from percolation.rdf import po, a, c
 from percolation.rdf.publishing import TranslationPublishing
 import babel
@@ -108,16 +109,15 @@ class ParticipabrPublishing(TranslationPublishing):
                            (participanturi, po.email, email),
                            ]
             count += 1
-            if count % 1 == 0:
+            if count % 500 == 0:
                 c("profiles done:", count)
-                break
         c("finished triplification of profiles")
         P.add(triples, self.translation_graph)
         c("finished add of profiles to endpoint")
 
     def translateArticles(self):
         triples = []
-        count=0
+        count = 0
         for profile_id, published, id_, type_, body, abstract, created_at,\
                 updated_at, published_at, hits, start_date, end_date,\
                 parent_id, position, path, setting in\
@@ -285,7 +285,7 @@ class ParticipabrPublishing(TranslationPublishing):
         triples = []
         fids = self.friendships_table.getMany(("person_id", "friend_id"))
         added_friendships = []
-        count=0
+        count = 0
         for person_id, friend_id, created_at, group in \
                 self.friendships_table.getMany(
                     ('person_id', 'friend_id', 'created_at', 'group')):
@@ -325,7 +325,7 @@ class ParticipabrPublishing(TranslationPublishing):
     def translateVotes(self):
         triples = []
         commentids = set(self.comments_table.get("id"))
-        count=0
+        count = 0
         for id_, vote, voteable_id, voteable_type,\
             voter_id, voter_type, created_at in \
             self.votes_table.getMany(
@@ -495,7 +495,35 @@ def parseData(datastring, participanturi, setting=False):
                                "unicode_escape").encode("latin1").decode("utf8")
     countries = babel.Locale("pt").territories
     # candidates = re.findall(r":(.*?): (.*)", datastring, re.S)
-    candidates = re.findall(r":(.*?): (.*?)[:\n]", datastring, re.S)
+    lines = datastring.split("\n")
+    candidates_ = [i.split(":") for i in lines]
+    candidates = []
+    for can in candidates_:
+        if len(can) == 1:
+            continue
+        elif len(can) == 2:
+            field = can[0]
+            value = can[1]
+        elif len(can) == 3:
+            field = can[1]
+            value = can[2]
+            assert not bool(can[0])
+        elif len(can) >= 4:
+            assert not bool(can[0])
+            assert all([bool(i.strip()) for i in can[2:]])
+            field = can[1]
+            value = ":".join([i.strip() for i in can[2:]])
+        field_ = re.sub(r"[\":]", "", field).strip()
+        value_ = re.sub(r"[\":]", "", value).strip()
+        if not value_:
+            continue
+        if not field_:
+            c("empty field?:", field, field_)
+        # c(field, field_, value, value_)
+        candidates += [(field_, value_)]
+
+    # regex_pattern = r":(.*?): (.*?)[:\n]"
+    # candidates = re.findall(regex_pattern, datastring, re.S)
     data = {}
     allowed = {"acronym", "contactEmail", "description",
                "organizationWebsite", "professionalActivity"}
@@ -596,3 +624,12 @@ def parseData(datastring, participanturi, setting=False):
                        ]
             data[field_] = value_
     return data, triples
+
+
+if __name__ == '__main__':
+    import psycopg2
+    exec(open(Pa.PARTICIPATIONDIR+"accesses.py").read())
+    con = psycopg2.connect(
+        database=participabr.postgre_database, user=participabr.postgre_user)
+    cur = con.cursor()
+    ParticipabrPublishing(cur)
