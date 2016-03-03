@@ -2,6 +2,8 @@ from percolation.rdf import NS, po, a, c
 from percolation.rdf.publishing import TranslationPublishing
 import percolation as P, numpy as n, nltk as k, os, re, datetime, shutil
 from participation import PACKAGEDIR
+
+
 class AAPublishing(TranslationPublishing):
     hastext=True
     isinteraction=False
@@ -23,6 +25,7 @@ class AAPublishing(TranslationPublishing):
         for i in locals_:
             exec("self.{}={}".format(i,i))
     def makeMetadata(self):
+        return
         qtriples=[
                  ("?fooshout",po.shoutText,"?text"),
                  ]

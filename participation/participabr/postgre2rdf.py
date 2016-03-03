@@ -721,5 +721,5 @@ if __name__ == '__main__':
     con = psycopg2.connect(
         database=participabr.postgre_database, user=participabr.postgre_user)
     cur = con.cursor()
-    # ParticipabrPublishing(cur)
-    ParticipabrPublishing(cur, profiles=False,articles=False)
+    ParticipabrPublishing(cur)
+    # ParticipabrPublishing(cur, profiles=False,articles=False)
