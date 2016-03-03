@@ -14,8 +14,9 @@ from percolation.rdf import c
 # triplification_classes=Pa.aa.render.publishAll(*ss)
 # c("finished publication of all aa")
 
+triplification_class = Pa.participabr.access.parseLegacyFiles()
 # triplification_class = Pa.participabr.access.parseLegacyFiles(profiles=False)
-triplification_class = Pa.participabr.access.parseLegacyFiles(profiles=False,
-                                                              articles=False,
-                                                              comments=False)
+# triplification_class = Pa.participabr.access.parseLegacyFiles(profiles=False,
+#                                                             articles=False,
+#                                                             comments=False)
 c("finished publication of participabr")

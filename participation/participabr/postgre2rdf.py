@@ -123,14 +123,13 @@ class ParticipabrPublishing(TranslationPublishing):
             if count % 20 == 0:
                 # c("profiles done:", count)
                 # c(len(triples))
+                c("profiles done:", count, "ntriples:", len(triples))
                 P.add(triples, self.translation_graph)
                 # c("finished add")
                 triples = []
-            if count % 100 == 0:
-                c("profiles added to endpoint:", count)
-        c("finished triplification of profiles")
-        P.add(triples, self.translation_graph)
-        c("finished add of profiles to endpoint")
+        if triples:
+            c("ntriples:", len(triples))
+            P.add(triples, self.translation_graph)
 
     def addArticleAbstract(self,body,articleuri):
         triples = []
@@ -260,13 +259,16 @@ class ParticipabrPublishing(TranslationPublishing):
                 triples += triples2_
                 self.datas2 += [(data2_, setting)]
             count += 1
-            if count % 1 == 0:
+            if count % 50 == 0:
                 c("articles done:", count)
                 c("ntriples:", len(triples))
                 c("finished triplification of articles")
                 P.add(triples, self.translation_graph)
                 c("finished add of articles")
                 triples = []
+        if triples:
+            c("ntriples:", len(triples))
+            P.add(triples, self.translation_graph)
 
     def translateComments(self):
         triples = []
@@ -329,13 +331,16 @@ class ParticipabrPublishing(TranslationPublishing):
                            (commenturi, po.url, referrer)
                            ]
             count += 1
-            if count % 1 == 0:
+            if count % 100 == 0:
                 c("done comments:", count)
                 c("finished triplification of comments")
                 c("ntriples:", len(triples))
                 P.add(triples, self.translation_graph)
                 c("finished add of comments")
                 triples = []
+        if triples:
+            c("ntriples:", len(triples))
+            P.add(triples, self.translation_graph)
 
     def translateFriendships(self):
         triples = []
@@ -371,12 +376,15 @@ class ParticipabrPublishing(TranslationPublishing):
                            (friendshipuri, po.socialCircle, group),
                            ]
             count += 1
-            if count % 1 == 0:
-                c("friendships done:", count)
-                break
-        c("finished triplification of friendships")
-        P.add(triples, self.translation_graph)
-        c("finished add of friendships")
+            if count % 100 == 0:
+                c("done friendships:", count)
+                c("ntriples:", len(triples))
+                P.add(triples, self.translation_graph)
+                c("finished add of friendships")
+                triples = []
+        if triples:
+            c("ntriples:", len(triples))
+            P.add(triples, self.translation_graph)
 
     def translateVotes(self):
         triples = []
@@ -416,12 +424,15 @@ class ParticipabrPublishing(TranslationPublishing):
                            (voteuri, po.author, participanturi),
                            ]
             count += 1
-            if count % 1 == 0:
+            if count % 100 == 0:
                 c("votes done:", count)
-                break
-        c("finished triplification of votes")
-        P.add(triples, self.translation_graph)
-        c("finished add of votes")
+                c("ntriples:", len(triples))
+                P.add(triples, self.translation_graph)
+                c("finished add of votes")
+                triples = []
+        if triples:
+            c("ntriples:", len(triples))
+            P.add(triples, self.translation_graph)
 
     def translateTagsTagging(self):
         triples = []
@@ -438,11 +449,20 @@ class ParticipabrPublishing(TranslationPublishing):
                        (taguri, po.name, name)
                        ]
             count += 1
-            if count % 1 == 0:
-                c("taggings done:", count)
-                break
+            if count % 100 == 0:
+                c("tags done:", count)
+                c("ntriples:", len(triples))
+                P.add(triples, self.translation_graph)
+                c("finished add of tags")
+                triples = []
+        if triples:
+            c("ntriples:", len(triples))
+            P.add(triples, self.translation_graph)
+
+
         tagids = self.tags_table.get("id")
         count = 0
+        triples = []
         for id_, tag_id, taggable_id, taggable_type, created_at in\
                 self.taggings_table.getMany(
                     ('id', 'tag_id', 'taggable_id',
@@ -464,10 +484,16 @@ class ParticipabrPublishing(TranslationPublishing):
                        (tagginguri, po.createdAt, created_at),
                        ]
             count += 1
-            if count % 1 == 0:
+            if count % 100 == 0:
                 c("taggings done:", count)
-                break
-        P.add(triples, self.translation_graph)
+                c("taggings done:", count)
+                c("ntriples:", len(triples))
+                P.add(triples, self.translation_graph)
+                c("finished add of taggings")
+                triples = []
+        if triples:
+            c("ntriples:", len(triples))
+            P.add(triples, self.translation_graph)
 
     def translateToRdf(self):
         if self.profiles:
@@ -482,8 +508,8 @@ class ParticipabrPublishing(TranslationPublishing):
             c("start comments")
             self.translateComments()
             c("end comments")
-        self.translateFriendships()
-        c("end friendships")
+        #self.translateFriendships()
+        #c("end friendships")
         self.translateVotes()
         c("end votes")
         self.translateTagsTagging()
