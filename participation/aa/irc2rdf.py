@@ -5,8 +5,10 @@ import social as S
 import percolation as P
 from .general import AAPublishing
 from percolation.rdf import po, c
-regex_url = re.compile('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
-rmsg = r"(\d{4})\-(\d{2})\-(\d{2})T(\d{2}):(\d{2}):(\d{2})  \<(.*?)\> (;aa +(.*)|lalenia[,:]{0,1} +aa +(.*))"
+regex_url = re.compile(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|'
+                       r'[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
+rmsg = (r"(\d{4})\-(\d{2})\-(\d{2})T(\d{2}):(\d{2}):(\d{2})  \<(.*?)\>"
+        r" (;aa +(.*)|lalenia[,:]{0,1} +aa +(.*))")
 
 
 class LogPublishing(AAPublishing):
