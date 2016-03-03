@@ -4,6 +4,7 @@ import datetime
 import re
 import codecs
 import rfc3986
+from SPARQLWrapper.SPARQLExceptions import QueryBadFormed
 import percolation as P
 import participation as Pa
 from percolation.rdf import po, a, c
@@ -32,11 +33,13 @@ class DataTable:
 
 
 class ParticipabrPublishing(TranslationPublishing):
-    snapshotid = "participabr-legacy"
-    translation_graph = "participabr-translation"
-    meta_graph = "participabr-meta"
+    snapshotid = "participabr_legacy"
+    translation_graph = "participabr_translation"
+    meta_graph = "participabr_meta"
+    __ID = 0
 
-    def __init__(self, postgresql_cursor):
+    def __init__(self, postgresql_cursor, profiles=True, articles=True,
+                 comments=True):
         snapshoturi = P.rdf.ic(po.ParticipabrSnapshot,
                                self.snapshotid, self.translation_graph)
         P.add((snapshoturi, a, po.Snapshot), context=self.translation_graph)
@@ -44,6 +47,7 @@ class ParticipabrPublishing(TranslationPublishing):
         datas2 = []
         datas = []
         bodies = []
+        abstracts = []
         locals_ = locals().copy()
         del locals_["self"]
         for i in locals_:
@@ -52,6 +56,10 @@ class ParticipabrPublishing(TranslationPublishing):
         self.getData(cur)
         c("start translate")
         self.translateToRdf()
+
+    def getID(self):
+        self.__ID += 1
+        return self.__ID
 
     def translateProfiles(self):
         triples = []
@@ -76,7 +84,7 @@ class ParticipabrPublishing(TranslationPublishing):
             assert public_profile in (False, True)
             assert isinstance(created_at, datetime.datetime)
             assert isinstance(updated_at, datetime.datetime)
-            triples = [
+            triples += [
                       (participanturi, po.name, name),
                       (participanturi, a, eval("po."+type_)),
                       (participanturi, po.profile, profileuri),
@@ -89,7 +97,10 @@ class ParticipabrPublishing(TranslationPublishing):
             assert isinstance(lng, (type(None), float))
             assert type(lat) == type(lng)
             if lat:
-                place = r.BNode()
+                # place = r.BNode()
+                place = P.rdf.ic(po.Place,
+                                 self.snapshotid+"-"+str(self.getID()),
+                                 self.translation_graph, self.snapshoturi)
                 triples += [
                            (participanturi, po.basedNear, place),
                            (place, po.latitude, lat),
@@ -109,11 +120,73 @@ class ParticipabrPublishing(TranslationPublishing):
                            (participanturi, po.email, email),
                            ]
             count += 1
-            if count % 500 == 0:
-                c("profiles done:", count)
+            if count % 20 == 0:
+                # c("profiles done:", count)
+                # c(len(triples))
+                P.add(triples, self.translation_graph)
+                # c("finished add")
+                triples = []
+            if count % 100 == 0:
+                c("profiles added to endpoint:", count)
         c("finished triplification of profiles")
         P.add(triples, self.translation_graph)
         c("finished add of profiles to endpoint")
+
+    def addArticleAbstract(self,body,articleuri):
+        triples = []
+        if re.findall(r"<(.*)>(.*)<(.*)>", body, re.S):
+            try:
+                P.add((articleuri, po.htmlAbstractText, body),
+                      context=self.translation_graph)
+            except QueryBadFormed:
+                c("QUOTING HTML BODY")
+                P.add((articleuri, po.quotedHtmlAbstractText,
+                       urllib.parse.quote(body)),
+                       context=self.translation_graph)
+            cleanbody = BeautifulSoup(body, 'html.parser').get_text()
+            if cleanbody:
+                try:
+                    P.add((articleuri, po.cleanAbstractText, cleanbody),
+                           context=self.translation_graph)
+                except QueryBadFormed:
+                    c("QUOTING HTML CLEAN BODY")
+                    P.add((articleuri, po.quotedCleanAbstractText,
+                           urllib.parse.quote(cleanbody)),
+                           context=self.translation_graph)
+        else:
+            triples += [
+                       (articleuri, po.cleanAbstractText, body),
+                       ]
+            P.add(triples,context=self.translation_graph)
+        self.abstracts += [body]
+
+    def addArticleBody(self,body,articleuri):
+        triples = []
+        if re.findall(r"<(.*)>(.*)<(.*)>", body, re.S):
+            try:
+                P.add((articleuri, po.htmlBodyText, body),
+                      context=self.translation_graph)
+            except QueryBadFormed:
+                c("QUOTING HTML BODY")
+                P.add((articleuri, po.quotedHtmlBodyText,
+                       urllib.parse.quote(body)),
+                       context=self.translation_graph)
+            cleanbody = BeautifulSoup(body, 'html.parser').get_text()
+            if cleanbody:
+                try:
+                    P.add((articleuri, po.cleanBodyText, cleanbody),
+                           context=self.translation_graph)
+                except QueryBadFormed:
+                    c("QUOTING HTML CLEAN BODY")
+                    P.add((articleuri, po.quotedCleanBodyText,
+                           urllib.parse.quote(cleanbody)),
+                           context=self.translation_graph)
+        else:
+            triples += [
+                       (articleuri, po.cleanBodyText, body),
+                       ]
+            P.add(triples,context=self.translation_graph)
+        self.bodies += [body]
 
     def translateArticles(self):
         triples = []
@@ -126,7 +199,7 @@ class ParticipabrPublishing(TranslationPublishing):
                      "type", "body", "abstract", "created_at", "updated_at",
                      "published_at", "hits", "start_date", "end_date",
                      "parent_id", "position", "path", "setting")
-                ):
+                )[7250:]:
             identifier = self.profileids[profile_id]
             participanturi = po.Participant+"#"+self.snapshotid+"-"+identifier
             type__ = type_.split("::")[-1]
@@ -151,28 +224,9 @@ class ParticipabrPublishing(TranslationPublishing):
                     body.strip().count(" ") < 2:
                 body = ""
             if body:
-                if re.findall(r"<(.*)>(.*)<(.*)>", body, re.S):
-                    rawbody = BeautifulSoup(body, 'html.parser').get_text()
-                    triples += [
-                               (articleuri, po.htmlBodyText, body),
-                               (articleuri, po.cleanBodyText, rawbody),
-                               ]
-                else:
-                    triples += [
-                               (articleuri, po.cleanBodyText, body),
-                               ]
-                self.bodies += [body]
-            if abstract:
-                if re.findall(r"<(.*)>(.*)<(.*)>", abstract, re.S):
-                    rawbody = BeautifulSoup(abstract, 'html.parser').get_text()
-                    triples += [
-                               (articleuri, po.htmlAbstractText, body),
-                               (articleuri, po.cleanAbstractText, rawbody),
-                               ]
-                else:
-                    triples += [
-                               (articleuri, po.cleanAbstractText, body),
-                               ]
+                self.addArticleBody(body,articleuri)
+            if abstract and abstract.strip():
+                self.addArticleAbstract(abstract,articleuri)
             if parent_id:
                 type2__ = self.articletypes[parent_id].split("::")[-1]
                 articleuri2 = P.rdf.ic(eval("po."+type2__),
@@ -208,10 +262,11 @@ class ParticipabrPublishing(TranslationPublishing):
             count += 1
             if count % 1 == 0:
                 c("articles done:", count)
-                break
-        c("finished triplification of articles")
-        P.add(triples, self.translation_graph)
-        c("finished add of articles")
+                c("ntriples:", len(triples))
+                c("finished triplification of articles")
+                P.add(triples, self.translation_graph)
+                c("finished add of articles")
+                triples = []
 
     def translateComments(self):
         triples = []
@@ -243,7 +298,7 @@ class ParticipabrPublishing(TranslationPublishing):
                 self.translation_graph, self.snapshoturi)
             triples += [
                        (commenturi, po.createdAt, created_at),
-                       (commenturi, po.bodyText, body),
+                       (commenturi, po.bodyText, body.replace("\r","\n")),
                        (commenturi, po.sourceArticle, articleuri),
                        ]
             if title and len(title) > 2 and title.count(title[0]) != len(title)\
@@ -275,11 +330,12 @@ class ParticipabrPublishing(TranslationPublishing):
                            ]
             count += 1
             if count % 1 == 0:
-                c("done:", count)
-                break
-        c("finished triplification of comments")
-        P.add(triples, self.translation_graph)
-        c("finished add of comments")
+                c("done comments:", count)
+                c("finished triplification of comments")
+                c("ntriples:", len(triples))
+                P.add(triples, self.translation_graph)
+                c("finished add of comments")
+                triples = []
 
     def translateFriendships(self):
         triples = []
@@ -414,13 +470,18 @@ class ParticipabrPublishing(TranslationPublishing):
         P.add(triples, self.translation_graph)
 
     def translateToRdf(self):
-        c("start profiles")
-        self.translateProfiles()
-        c("end profiles")
-        self.translateArticles()
-        c("end articles")
-        self.translateComments()
-        c("end comments")
+        if self.profiles:
+            c("start profiles")
+            self.translateProfiles()
+            c("end profiles")
+        if self.articles:
+            c("start articles")
+            self.translateArticles()
+            c("end articles")
+        if self.comments:
+            c("start comments")
+            self.translateComments()
+            c("end comments")
         self.translateFriendships()
         c("end friendships")
         self.translateVotes()
@@ -510,11 +571,13 @@ def parseData(datastring, participanturi, setting=False):
             assert not bool(can[0])
         elif len(can) >= 4:
             assert not bool(can[0])
-            assert all([bool(i.strip()) for i in can[2:]])
+            #assert all([bool(i.strip()) for i in can[2:]])
             field = can[1]
             value = ":".join([i.strip() for i in can[2:]])
-        field_ = re.sub(r"[\":]", "", field).strip()
-        value_ = re.sub(r"[\":]", "", value).strip()
+        field_ = re.sub(r"[\":\\r]", "", field).strip()
+        value_ = re.sub(r"[\":\\r]", "", value).strip()
+        if len(value_) == value_.count('?'):
+            value_ = None
         if not value_:
             continue
         if not field_:
@@ -632,4 +695,5 @@ if __name__ == '__main__':
     con = psycopg2.connect(
         database=participabr.postgre_database, user=participabr.postgre_user)
     cur = con.cursor()
-    ParticipabrPublishing(cur)
+    # ParticipabrPublishing(cur)
+    ParticipabrPublishing(cur, profiles=False,articles=False)

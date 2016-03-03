@@ -11,7 +11,7 @@ def remove_tags(text):
     return TAG_RE.sub('', text)
 
 
-def parseLegacyFiles():
+def parseLegacyFiles(profiles=True, articles=True, comments=True):
     """Parse legacy postgresql data from paricipabr"""
     # access mysql, access mongo, access irc log from social/
     c("starting participabr access")
@@ -20,4 +20,4 @@ def parseLegacyFiles():
     cur = con.cursor()
 
     # dados das tabelas
-    return ParticipabrPublishing(cur)
+    return ParticipabrPublishing(cur, profiles, articles, comments)
