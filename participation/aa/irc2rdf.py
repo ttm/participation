@@ -14,7 +14,7 @@ class LogPublishing(AAPublishing):
 
     def __init__(self, logfile, final_path="aa_snapshots/"):
         # AAPublishing.__init__(self, final_path, self.snapshotid)
-        snapshotid = "aa-irc-legacy-"+logfile.split("/")[-1]
+        snapshotid = "aa-irc-legacy-"+logfile.split("/")[-1].replace("#", "")
         translation_graph = "participation_aairc_translation-"+snapshotid
         snapshoturi = P.rdf.ic(po.AASnapshot, snapshotid,
                                translation_graph)
