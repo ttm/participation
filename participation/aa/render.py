@@ -29,7 +29,8 @@ if __name__ == "__main__":
     # ss=Pa.aa.access.parseLegacyFiles(0,0,1,0)
     import participation as Pa
     c("started access")
-    ss = Pa.aa.access.parseLegacyFiles(0, 0, 1, 0)
+    # ss = Pa.aa.access.parseLegacyFiles(0, 0, 1, 0)
+    ss = Pa.aa.access.parseLegacyFiles(1, 0, 1, 1)
     c("finished access, starting triplification")
     triplification_classes = Pa.aa.render.publishAll(*ss)
     c("finished publication of all aa")

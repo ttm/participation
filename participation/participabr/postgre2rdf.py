@@ -722,4 +722,5 @@ if __name__ == '__main__':
         database=participabr.postgre_database, user=participabr.postgre_user)
     cur = con.cursor()
     ParticipabrPublishing(cur)
+    print('banana')
     # ParticipabrPublishing(cur, profiles=False,articles=False)
