@@ -1,9 +1,10 @@
-import rdflib as r
+import os
 import urllib
 import datetime
 import re
 import codecs
 import rfc3986
+import rdflib as r
 from SPARQLWrapper.SPARQLExceptions import QueryBadFormed
 import percolation as P
 import participation as Pa
@@ -56,6 +57,17 @@ class ParticipabrPublishing(TranslationPublishing):
         self.getData(cur)
         c("start translate")
         self.translateToRdf()
+        self.writeRdf()
+
+    def writeRdf(self):
+        pub_dir = './participation_rdf/'
+        if not os.path.isdir(pub_dir):
+            os.mkdir(pub_dir)
+        g = P.context(self.translation_graph)
+        g.serialize(pub_dir+'participation.ttl', 'turtle')
+        c('participation ttl serialized')
+        g.serialize(pub_dir+'participation.rdf', 'xml')
+        c('participation xml serialized')
 
     def getID(self):
         self.__ID += 1
@@ -131,7 +143,7 @@ class ParticipabrPublishing(TranslationPublishing):
             c("ntriples:", len(triples))
             P.add(triples, self.translation_graph)
 
-    def addArticleAbstract(self,body,articleuri):
+    def addArticleAbstract(self, body, articleuri):
         triples = []
         if re.findall(r"<(.*)>(.*)<(.*)>", body, re.S):
             try:
@@ -141,7 +153,7 @@ class ParticipabrPublishing(TranslationPublishing):
                 c("QUOTING HTML BODY")
                 P.add((articleuri, po.quotedHtmlAbstractText,
                        urllib.parse.quote(body)),
-                       context=self.translation_graph)
+                      context=self.translation_graph)
             cleanbody = BeautifulSoup(body, 'html.parser').get_text()
             if cleanbody:
                 try:

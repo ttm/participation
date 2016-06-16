@@ -63,7 +63,7 @@ def accessIrcLog():
     #     with codecs.open(logfile, "rb", "iso-8859-1") as f:
     #         logtext_ = S.irc.log2rdf.textFix(f.read())
     #         logtext += "\n"+P.utils.cleanText(logtext_)
-    return aa.logfiles[3:]
+    return aa.logfiles
 
 
 def accessOreShouts():
