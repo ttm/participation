@@ -1,3 +1,4 @@
+import rdflib as r
 from percolation.rdf import c
 from participation.aa.mysql2rdf import MysqlPublishing
 from participation.aa.mongo2rdf import MongoPublishing
@@ -9,7 +10,7 @@ import os
 
 def publishAll(mysqldb=None, mongoshouts=None, irclogs=None, oreshouts=None):
     """express aa shouts as RDF for publishing"""
-    pub_dir='./aa_translates/'
+    pub_dir='./aa_snapshots/'
     if not os.path.isdir(pub_dir):
         os.mkdir(pub_dir)
     if mysqldb:

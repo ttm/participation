@@ -34,7 +34,7 @@ class DataTable:
 
 
 class ParticipabrPublishing(TranslationPublishing):
-    snapshotid = "participabr_legacy"
+    snapshotid = "participabr-legacy"
     translation_graph = "participabr_translation"
     meta_graph = "participabr_meta"
     __ID = 0
@@ -60,13 +60,13 @@ class ParticipabrPublishing(TranslationPublishing):
         self.writeRdf()
 
     def writeRdf(self):
-        pub_dir = './participation_rdf/'
+        pub_dir = './participabr_snapshot/'
         if not os.path.isdir(pub_dir):
             os.mkdir(pub_dir)
         g = P.context(self.translation_graph)
-        g.serialize(pub_dir+'participation.ttl', 'turtle')
+        g.serialize(pub_dir+'participabr.ttl', 'turtle')
         c('participation ttl serialized')
-        g.serialize(pub_dir+'participation.rdf', 'xml')
+        g.serialize(pub_dir+'participabr.rdf', 'xml')
         c('participation xml serialized')
 
     def getID(self):
