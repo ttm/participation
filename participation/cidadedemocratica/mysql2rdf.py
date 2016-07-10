@@ -148,7 +148,7 @@ class CidadeDemocraticaPublishing:
                             (participanturi, po.fax, fax)
                         )
             count += 1
-             if count % 60 == 0:
+            if count % 60 == 0:
                 c("finished users extra entries:", count, "ntriples:", len(triples))
                 P.add(triples, self.translation_graph)
                 c("finished add of users extra entries")
@@ -161,6 +161,7 @@ class CidadeDemocraticaPublishing:
         self.topicuris = {}
         trans = {"Proposta": 'proposal',
                  "Problema": 'problem']
+        count = 0
         for topico in self.data['topicos']:
             ttype=topico[1]
             uid = topico[2]
@@ -198,12 +199,25 @@ class CidadeDemocraticaPublishing:
                 (topicuri, po.title, titulo),
                 (topicuri, po.description, desc),
                 (topicuri, po.createdAt, created),
-                (topicuri, po.updatedAt, updated),
                 (topicuri, po.commentCount, ccomments),
                 (topicuri, po.adhesionCount, cadesoes),
                 (topicuri, po.relevance, relevancia),
                 (topicuri, po.followersCount, cseguidores),
+                (topicuri, po.topicType, trans(ttype)),
             ]
+            if updated != created:
+                 triples.append(
+                    (topicuri, po.updatedAt, updated),
+                 )
+            count += 1
+            if count % 60 == 0:
+                c("finished topic entries:", count, "ntriples:", len(triples))
+                P.add(triples, self.translation_graph)
+                c("finished add of topic entries")
+                triples = []
+        if triples:
+                P.add(triples, self.translation_graph)
+        c("finished add of topic entries")
 
 
     def translateComments(self):
@@ -216,16 +230,55 @@ class CidadeDemocraticaPublishing:
             tid = comment[1]  # topic id
             body = comment[3]
             uid = comment[4]
-            ttype = comment[8]
+            ctype = comment[8]
             created = comment[9]
             updated = comment[10]
 
+            assert isinstance(cid, int)
+            assert isinstance(tid, int)
+            assert isinstance(body, str)
+            assert isinstance(uid, int)
+            assert isinstance(ctype, str)
+            assert isinstance(created, datetime.datetime)
+            assert isinstance(updated, datetime.datetime)
             commenturi = P.rdf.ic(po.Comment,
                                 self.snapshotid+"-"+str(cid),
                                 self.translation_graph, self.snapshoturi)
             participanturi = po.Participant+'#'+ self.snapshotid+"-"+str(uid)
             topicuri = self.topicuris[tid]
+            triples = [
+                (commenturi, po.author, participanturi),
+                (commenturi, po.topic, topicuri),
+                (commenturi, po.body, body),
+                (commenturi, po.commentType, trans(ctype)),
+                (topicuri, po.createdAt, created),
+            ]
+            if updated != created:
+                 triples.append(
+                    (topicuri, po.updatedAt, updated),
+                 )
+            count += 1
+            if count % 60 == 0:
+                c("finished comment entries:", count, "ntriples:", len(triples))
+                P.add(triples, self.translation_graph)
+                c("finished add of comment entries")
+                triples = []
+        if triples:
+                P.add(triples, self.translation_graph)
+        c("finished add of comment entries")
 
+    def translateCompetitions(self):
+        coid=competition[0]
+        sdesc=competition[1]
+        created=competition[3]
+        updated=competition[4]
+        start=competition[5]
+        title=competition[11]
+        ldesc=competition[14]
+        adesc=competition[15]
+        reg=competition[16]
+        aw=competition[17]
+        part=competition[18]
 
     def translateToRdf(self):
         pass
@@ -233,6 +286,7 @@ class CidadeDemocraticaPublishing:
         self.translateUsers2()
         self.translateTopics()
         self.translateComments()
+        self.translateCompetitions()
         pass
 
     def getData(self):
