@@ -161,6 +161,7 @@ class CidadeDemocraticaPublishing:
         trans = {"Proposta": 'proposal',
                  "Problema": 'problem']
         count = 0
+        triples = []
         for topico in self.data['topicos']:
             tid=topico[0]
             ttype=topico[1]
@@ -192,7 +193,7 @@ class CidadeDemocraticaPublishing:
             topicuri = P.rdf.ic(po.Topic,
                                 self.snapshotid+"-"+tid,
                                 self.translation_graph, self.snapshoturi)
-            triples = [
+            triples += [
                 (topicuri, po.author, participanturi),
                 (topicuri, po.competition, competitionuri),
                 (topicuri, po.title, titulo),
@@ -224,6 +225,7 @@ class CidadeDemocraticaPublishing:
                  'pergunta': 'question',
                  'comentario': 'comment',
                  'ideia': 'idea'}
+        triples = []
         for comment in self.data['comments']:
             cid = comment[0]
             tid = comment[1]  # topic id
@@ -246,7 +248,7 @@ class CidadeDemocraticaPublishing:
             participanturi = po.Participant+'#'+ self.snapshotid+"-"+str(uid)
             # topicuri = self.topicuris[tid]
             topicuri = po.Topic+'#'+self.snapshotid+'-'+str(tid)
-            triples = [
+            triples += [
                 (commenturi, po.author, participanturi),
                 (commenturi, po.topic, topicuri),
                 (commenturi, po.body, body),
@@ -269,6 +271,7 @@ class CidadeDemocraticaPublishing:
 
     def translateCompetitions(self):
         count = 0
+        triples = []
 	for competition in self.data['competitions']:
             coid=competition[0]
             sdesc=competition[1]
@@ -284,7 +287,7 @@ class CidadeDemocraticaPublishing:
             competitionuri = P.rdf.ic(po.Competition,
                                 self.snapshotid+"-"+str(coid),
                                 self.translation_graph, self.snapshoturi)
-            triples = [
+            triples += [
                     (competitionuri, po.shortDescription, sdesc),
                     (competitionuri, po.longDescription, ldesc),
                     (competitionuri, po.authorDescription, adesc),
@@ -312,6 +315,7 @@ class CidadeDemocraticaPublishing:
 
     def translatePrizes(self):
         count = 0
+        triples = []
         for prize in self.data["competition_prizes"]:
             pid=prize[0]
             name=prize[1]
@@ -325,7 +329,7 @@ class CidadeDemocraticaPublishing:
                                 self.snapshotid+"-"+str(pid),
                                 self.translation_graph, self.snapshoturi)
             
-            triples = [
+            triples += [
                     (prizeuri, po.name, name),
                     (prizeuri, po.description, description),
                     (prizeuri, po.description, description),
@@ -353,6 +357,7 @@ class CidadeDemocraticaPublishing:
 
     def translateTags(self):
         count = 0
+        triples = []
         for tag in d["tags"]:
             tid=tag[0] # Ok.
             tag_=tag[1] # Ok.
@@ -361,7 +366,7 @@ class CidadeDemocraticaPublishing:
             uri = P.rdf.ic(po.Tag,
                                 self.snapshotid+"-"+str(tid),
                                 self.translation_graph, self.snapshoturi)
-            triples = [
+            triples += [
                     (uri,ocd.text,tag_),
                     (uri,ocd.relevance,relevancia),
             ]
@@ -377,6 +382,7 @@ class CidadeDemocraticaPublishing:
 
     def translateTaggings(self):
         count = 0
+        triples = []
         for tagging in d["taggings"]:
             tid_=tagging[0] #tagging Ok.
             tid=tagging[1] #tag Ok.
@@ -389,10 +395,10 @@ class CidadeDemocraticaPublishing:
             uri = P.rdf.ic(po.Tagging,
                                 self.snapshotid+"-"+str(tid_),
                                 self.translation_graph, self.snapshoturi)
-            triples = [
+            triples += [
                 (uri, po.tag, ocd.Tag+"#"+self.snapshotid++'-'+str(tid)),
-                G(uri, po.tagger, po.Participant+"#"+self.snapshotid+'-'+uid),
-                G(uri, po.createdAt, created)
+                (uri, po.tagger, po.Participant+"#"+self.snapshotid+'-'+uid),
+                (uri, po.createdAt, created)
             ]
             if ttype=="Topico":
                 # tagging -> topico
@@ -400,7 +406,7 @@ class CidadeDemocraticaPublishing:
                     po.Topic+'#'+self.snapshotid+'-'+str(toid)))
             else:
                 triples.append((uri,ocd.tagged,
-                    po.Tag+"#"+self.snapshotid+'-'+str(toid)))
+                    po.Macrotag+"#"+self.snapshotid+'-'+str(toid)))
             count += 1
             if count % 160 == 0:
                 c("finished tagging  entries:", count, "ntriples:", len(triples))
@@ -414,6 +420,7 @@ class CidadeDemocraticaPublishing:
 
     def translateStates(self):
         count = 0
+        triples = []
         for estado in d["estados"]:
             gid=estado[0]
             nome=estado[1] # ok
@@ -424,7 +431,7 @@ class CidadeDemocraticaPublishing:
             uri = P.rdf.ic(po.State,
                            self.snapshotid+"-"+str(gid),
                            self.translation_graph, self.snapshoturi)
-            triples = [
+            triples += [
                     (uri, po.name, nome),
                     (uri, po.abbreviatio, abr),
                     (uri, po.createdAt, created),
@@ -446,6 +453,8 @@ class CidadeDemocraticaPublishing:
 
 
     def translateCities(self):
+        count = 0
+        triples = []
         for cidade in d["cidades"]:
             cid=cidade[0]
             nome=cidade[1] # ok.
@@ -457,7 +466,7 @@ class CidadeDemocraticaPublishing:
             uri = P.rdf.ic(po.City,
                             self.snapshotid+"-"+str(cid),
                             self.translation_graph, self.snapshoturi)
-            triples = [
+            triples += [
                     (uri, po.name, nome),
                     (uri, po.state,
                         po.State+'#'+self.snapshotid+str(eid)),
@@ -481,6 +490,7 @@ class CidadeDemocraticaPublishing:
 
     def translateNeighborhoods(self):
         count = 0
+        triples = []
         for bairro in d["bairros"]:
             bid=bairro[0] # ok.
             nome=bairro[1] # ok.
@@ -491,7 +501,7 @@ class CidadeDemocraticaPublishing:
             uri = P.rdf.ic(po.Neighborhood,
                                 self.snapshotid+"-"+str(bid),
                                 self.translation_graph, self.snapshoturi)
-            triples = [
+            triples += [
                     (uri, po.name, nome),
                     (uri, po.city,
                         po.City+'#'+self.snapshotid+'-'+str(cid)),
@@ -514,6 +524,7 @@ class CidadeDemocraticaPublishing:
 
     def translatePlaces(self):
         count = 0
+        triples = []
         for local in d["locais"]:
             lid=local[0] # ok.
             rid=local[1]
@@ -527,7 +538,7 @@ class CidadeDemocraticaPublishing:
             uri = P.rdf.ic(po.Place,
                                 self.snapshotid+"-"+str(lid),
                                 self.translation_graph, self.snapshoturi)
-            triples = [(uri, po.createdAt, created)]
+            triples += [(uri, po.createdAt, created)]
             if bid:
                 triples.append((uri, po.neighborhood,
                 po.Neighborhood+'#'+self.snapshotid+'-'+bid))
@@ -566,6 +577,7 @@ class CidadeDemocraticaPublishing:
 
     def translateSupporters(self):
         count = 0
+        triples = []
         for adesao in d["adesoes"]:
             tid=adesao[0] # ok.
             uid=adesao[1] # ok.
@@ -575,7 +587,7 @@ class CidadeDemocraticaPublishing:
             uri = P.rdf.ic(po.Support,
                                 self.snapshotid+"-"+str(aid),
                                 self.translation_graph, self.snapshoturi)
-            triples = [
+            triples += [
                     (uri, po.participant,
                         po.Participant+'#'+self.snapshotid+'-'+uid),
                     (uri, po.topic,
@@ -597,6 +609,8 @@ class CidadeDemocraticaPublishing:
         c("finished add of supporters entries")
 
     def translateLinks(self):
+        count = 0
+        triples = []
         for link in d['links']:
             lid=link[0]
             nome=link[1]
@@ -607,7 +621,7 @@ class CidadeDemocraticaPublishing:
             uri = P.rdf.ic(po.Link,
                                 self.snapshotid+"-"+str(lid),
                                 self.translation_graph, self.snapshoturi)
-            triples = [
+            triples += [
                     (uri, po.name, nome),
                     (uri, po.url, url),
                     (uri, po.topic,
@@ -628,10 +642,174 @@ class CidadeDemocraticaPublishing:
                 P.add(triples, self.translation_graph)
         c("finished add of links entries")
     def translateObservatories(self):
-        =
-        return
+        count = 0
+        triples = []
+        for observatorio in d["observatorios"]:
+            oid=observatorio[0]
+            uid=observatorio[1]
+            created=observatorio[4]
+            updated=observatorio[5]
+            uri = P.rdf.ic(po.Observatory,
+                            self.snapshotid+"-"+str(oid),
+                            self.translation_graph, self.snapshoturi)
+            triples += [
+                    (uri, po.participant,
+                        po.Participant+'#'+self.snapshoturi+'-'+uid),
+                    (uri, po.createdAt, created),
+            ]
+            if updated != created:
+                triples += [
+                           (uri, po.updatedAt, updated),
+                           ]
+            count += 1
+            if count % 60 == 0:
+                c("finished observatory  entries:", count, "ntriples:", len(triples))
+                P.add(triples, self.translation_graph)
+                c("finished add of observatory entries")
+                triples = []
+        if triples:
+                P.add(triples, self.translation_graph)
+        c("finished add of observatory entries")
+    def translateObservatoryTags(self):
+        triples = []
+        for ot in d["observatorios_tem_tags"]:
+            oid=ot[0]
+            tid=ot[1]
+            triples.append((po.Observatory+'#'+self.snapshotid+'-'+str(oid),
+                po.hasTag, po.Tag+'#'+self.snapshotid+'-'+str(tid)))
+        P.add(triples, self.translation_graph)
+        c("finished add of observatory tag entries")
+
+    def translateLoginHistory(self):
+        triples = []
+        for login in d["historico_de_logins"]:
+            lid=login[0] # ok.
+            uid=login[1] # ok.
+            created=login[2] # ok.
+            ip=login[3] # ok.
+            uri = P.rdf.ic(po.Login,
+                                self.snapshotid+"-"+str(lid),
+                                self.translation_graph, self.snapshoturi)
+            triples += [
+                    (uri, po.participant,
+                        po.Participant+'#'+self.snapshotid+'-'+str(uid)),
+                    (uri, po.createdAt, created),
+                    (uri, po.ip, ip)
+            ]
+        P.add(triples, self.translation_graph)
+        c("finished add of login entries")
+
+
+    def translateInspirations(self):
+        count = 0
+        triples = []
+        for inspiration in d["inspirations"]:
+            iid=inspiration[0] # ok.
+            cid=inspiration[1] # ok.
+            desc=inspiration[2]  # ok.
+            created=inspiration[3] # ok.
+            updated=inspiration[4] # ok.
+            image=inspiration[5] # ok.
+            uid=inspiration[6] # ok.
+            title=inspiration[7] # ok.
+            uri = P.rdf.ic(po.Inspiration,
+                                self.snapshotid+"-"+str(iid),
+                                self.translation_graph, self.snapshoturi)
+            triples += [
+                    (uri, po.competition,
+                        po.Competition+'#'+self.snapshotid+'-'+str(cid)),
+                    (uri, po.description, desc),
+                    (uri, po.createdAt, created),
+                    (uri, po.participant,
+                        po.Participant+'#'+self.snapshotid+'-'+str(uid)),
+                    (uri, po.title, title),
+                    (uri, po.filename, image),
+            ]
+            if updated != created:
+                triples += [
+                           (uri, po.updatedAt, updated),
+                           ]
+            count += 1
+            if count % 60 == 0:
+                c("finished inspiration entries:", count, "ntriples:", len(triples))
+                P.add(triples, self.translation_graph)
+                c("finished add of inspiration entries")
+                triples = []
+        if triples:
+                P.add(triples, self.translation_graph)
+        c("finished add of inspiration entries")
+
+    def translateImages(self):
+        triples = []
+        count = 0
+        for imagem in d["imagens"]:
+            iid=imagem[0] # ok.
+            rid=imagem[1] # ok.
+            rtype=imagem[2] # ok.
+            size=imagem[3]
+            ctype=imagem[4]
+            fname=imagem[5]
+            height=imagem[6]
+            width=imagem[7]
+            legenda=imagem[11]
+            created=imagem[12]
+            updated=imagem[13]
+            uri = P.rdf.ic(po.Image,
+                                self.snapshotid+"-"+str(iid),
+                                self.translation_graph, self.snapshoturi)
+            triples.append((uri, ocd.createdAt, created))
+            if rtype=="User":
+                triples.append((uri, po.accountable,ocd.Participant+"#"+rid))
+            if rtype=="Topico":
+                triples.append((uri, po.accountable,ocd.Topic+"#"+rid))
+            if size:
+                triples.append((uri, po.size,int(size)))
+            if ctype:
+                triples.append((uri, po.contentType, ctype))
+            if fname:
+                triples.append((uri, po.filename, fname))
+            if height:
+                triples.append((uri, po.height, int(height)))
+            if width:
+                triples.append((uri, po.width, int(width)))
+            if legenda:
+                triples.append((uri, po.caption, legenda))
+            if updated != created:
+                triples.append((uri, po.updatedAt, updated))
+            count += 1
+            if count % 60 == 0:
+                c("finished image  entries:", count, "ntriples:", len(triples))
+                P.add(triples, self.translation_graph)
+                c("finished add of image entries")
+                triples = []
+        if triples:
+                P.add(triples, self.translation_graph)
+        c("finished add of prizes entries")
+
+    def translateMacrotags(self):
+        triples = []
+        for mt in d["macro_tags"]:
+            mtid=mt[0]
+            title=mt[1]
+            created=mt[2]
+            updated=mt[3]
+            uri = P.rdf.ic(po.Macrotag,
+                                self.snapshotid+"-"+str(mtid),
+                                self.translation_graph, self.snapshoturi)
+            triples.append((uri, po.createdAt, created))
+            if updated != created:
+                triples += [
+                           (uri, po.updatedAt, updated),
+                           ]
+            if title:
+                triples.append((uri, po.title, title))
+        P.add(triples, self.translation_graph)
+        c("finished add of microtag entries")
+
+
+
+
     def translateToRdf(self):
-        pass
         self.translateUsers()
         self.translateUsers2()
         self.translateTopics()
@@ -646,8 +824,12 @@ class CidadeDemocraticaPublishing:
         self.translatePlaces()
         self.translateSupporters()
         self.translateLinks()
-        translateObservatories()
-        pass
+        self.translateObservatories()
+        self.translateObservatoryTags()
+        self.translateLoginHistory()
+        self.translateInspirations()
+        self.translateImages()
+        self.translateMacrotags()
 
     def getData(self):
         db = MySQLdb.connect(user=cd.mysqluser, passwd=cd.mysqlpassword,
