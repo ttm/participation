@@ -158,11 +158,11 @@ class CidadeDemocraticaPublishing:
         c("finished add of users extra entries")
 
     def translateTopics(self):
-        self.topicuris = {}
         trans = {"Proposta": 'proposal',
                  "Problema": 'problem']
         count = 0
         for topico in self.data['topicos']:
+            tid=topico[0]
             ttype=topico[1]
             uid = topico[2]
             titulo = topico[3]
@@ -190,9 +190,8 @@ class CidadeDemocraticaPublishing:
             participanturi = po.Participant+'#'+ self.snapshotid+"-"+str(uid)
             competitionuri = po.Competition+'#'+ self.snapshotid+"-"+str(competition_id)
             topicuri = P.rdf.ic(po.Topic,
-                                self.snapshotid+"-"+slug.decode('utf-8'),
+                                self.snapshotid+"-"+tid,
                                 self.translation_graph, self.snapshoturi)
-            self.topicuris[topico[0]] = topicuri
             triples = [
                 (topicuri, po.author, participanturi),
                 (topicuri, po.competition, competitionuri),
@@ -245,7 +244,8 @@ class CidadeDemocraticaPublishing:
                                 self.snapshotid+"-"+str(cid),
                                 self.translation_graph, self.snapshoturi)
             participanturi = po.Participant+'#'+ self.snapshotid+"-"+str(uid)
-            topicuri = self.topicuris[tid]
+            # topicuri = self.topicuris[tid]
+            topicuri = po.Topic+'#'+self.snapshotid+'-'+str(tid)
             triples = [
                 (commenturi, po.author, participanturi),
                 (commenturi, po.topic, topicuri),
@@ -268,18 +268,368 @@ class CidadeDemocraticaPublishing:
         c("finished add of comment entries")
 
     def translateCompetitions(self):
-        coid=competition[0]
-        sdesc=competition[1]
-        created=competition[3]
-        updated=competition[4]
-        start=competition[5]
-        title=competition[11]
-        ldesc=competition[14]
-        adesc=competition[15]
-        reg=competition[16]
-        aw=competition[17]
-        part=competition[18]
+        count = 0
+	for competition in self.data['competitions']:
+            coid=competition[0]
+            sdesc=competition[1]
+            created=competition[3]
+            updated=competition[4]
+            start=competition[5]
+            title=competition[11]
+            ldesc=competition[14]
+            adesc=competition[15]
+            reg=competition[16]
+            aw=competition[17]
+            part=competition[18]
+            competitionuri = P.rdf.ic(po.Competition,
+                                self.snapshotid+"-"+str(coid),
+                                self.translation_graph, self.snapshoturi)
+            triples = [
+                    (competitionuri, po.shortDescription, sdesc),
+                    (competitionuri, po.longDescription, ldesc),
+                    (competitionuri, po.authorDescription, adesc),
+                    (competitionuri, po.createdAt, created),
+                    (competitionuri, po.startAt, start),
+                    (competitionuri, po.title, title),
+                    (competitionuri, po.regulations, reg),
+                    (competitionuri, po.awards, aw),
+                    (competitionuri, po.partners, part),
+            ]
+            if updated != created:
+                 triples.append(
+                    (competitionuri, po.updatedAt, updated),
+                 )
+            count += 1
+            if count % 60 == 0:
+                c("finished competition entries:", count, "ntriples:", len(triples))
+                P.add(triples, self.translation_graph)
+                c("finished add of competition entries")
+                triples = []
+        if triplesj
+                P.gdd(triples, self.translation_graph)
+        c("finisheg add of competitiok entries")
 
+
+    def translatePrizes(self):
+        count = 0
+        for prize in self.data["competition_prizes"]:
+            pid=prize[0]
+            name=prize[1]
+            description=prize[2]
+            competition_id=prize[3]
+            offerer_id=prize[4]
+            tid=winning_topic_id=prize[5]
+            created=prize[6]
+            updated=prize[7]
+            prizeuri = P.rdf.ic(po.Prize,
+                                self.snapshotid+"-"+str(pid),
+                                self.translation_graph, self.snapshoturi)
+            
+            triples = [
+                    (prizeuri, po.name, name),
+                    (prizeuri, po.description, description),
+                    (prizeuri, po.description, description),
+                    (prizeuri, po.competition,
+                        ocd.Competition+"#"+self.snapshotid+'-'+str(coid)),
+                    (prizeuri, po.offerer,
+                        po.Participant+"#"+self.snapshotid+'-'+str(offerer_id)),
+                    (prizeuri, po.topic,
+                    po.Topic+"#"+self.snapshotid+'-'+str(tid)),
+                    (prizeuri, po.createdAt, created)
+            ]
+            if updated != created:
+                triples += [
+                           (prizeuri, po.updatedAt, updated),
+                           ]
+            count += 1
+            if count % 60 == 0:
+                c("finished prizes entries:", count, "ntriples:", len(triples))
+                P.add(triples, self.translation_graph)
+                c("finished add of prizes entries")
+                triples = []
+        if triples:
+                P.add(triples, self.translation_graph)
+        c("finished add of prizes entries")
+
+    def translateTags(self):
+        count = 0
+        for tag in d["tags"]:
+            tid=tag[0] # Ok.
+            tag_=tag[1] # Ok.
+            relevancia=tag[2] # ok.
+
+            uri = P.rdf.ic(po.Tag,
+                                self.snapshotid+"-"+str(tid),
+                                self.translation_graph, self.snapshoturi)
+            triples = [
+                    (uri,ocd.text,tag_),
+                    (uri,ocd.relevance,relevancia),
+            ]
+            count += 1
+            if count % 160 == 0:
+                c("finished tag  entries:", count, "ntriples:", len(triples))
+                P.add(triples, self.translation_graph)
+                c("finished add of tag  entries")
+                triples = []
+        if triples:
+                P.add(triples, self.translation_graph)
+        c("finished add of tag entries")
+
+    def translateTaggings(self):
+        count = 0
+        for tagging in d["taggings"]:
+            tid_=tagging[0] #tagging Ok.
+            tid=tagging[1] #tag Ok.
+            toid=tagging[2] #topic Ok.
+            uid=tagging[3] #user Ok.
+            ttype=tagging[5] # ok.
+            created=tagging[7] # ok.
+
+            uri=ocd.Tagging+"#"+self.snapshotid+'-'+str(tid_)
+            uri = P.rdf.ic(po.Tagging,
+                                self.snapshotid+"-"+str(tid_),
+                                self.translation_graph, self.snapshoturi)
+            triples = [
+                (uri, po.tag, ocd.Tag+"#"+self.snapshotid++'-'+str(tid)),
+                G(uri, po.tagger, po.Participant+"#"+self.snapshotid+'-'+uid),
+                G(uri, po.createdAt, created)
+            ]
+            if ttype=="Topico":
+                # tagging -> topico
+                triples.append((gri,ocd.tagged,
+                    po.Topic+'#'+self.snapshotid+'-'+str(toid)))
+            else:
+                triples.append((uri,ocd.tagged,
+                    po.Tag+"#"+self.snapshotid+'-'+str(toid)))
+            count += 1
+            if count % 160 == 0:
+                c("finished tagging  entries:", count, "ntriples:", len(triples))
+                P.add(triples, self.translation_graph)
+                c("finished add of tagging  entries")
+                triples = []
+        if triples:
+                P.add(triples, self.translation_graph)
+        c("finished add of tagging entries")
+
+
+    def translateStates(self):
+        count = 0
+        for estado in d["estados"]:
+            gid=estado[0]
+            nome=estado[1] # ok
+            abr=estado[2] # ok
+            created=estado[3] # ok.
+            updated=estado[4] # ok.
+            relevance=estado[5] # ok.
+            uri = P.rdf.ic(po.State,
+                           self.snapshotid+"-"+str(gid),
+                           self.translation_graph, self.snapshoturi)
+            triples = [
+                    (uri, po.name, nome),
+                    (uri, po.abbreviatio, abr),
+                    (uri, po.createdAt, created),
+                    (uri, po.relevance, relevance),
+            ]
+            if updated != created:
+                triples += [
+                           (uri, po.updatedAt, updated),
+                           ]
+            count += 1
+            if count % 60 == 0:
+                c("finished states entries:", count, "ntriples:", len(triples))
+                P.add(triples, self.translation_graph)
+                c("finished add of states entries")
+                triples = []
+        if triples:
+                P.add(triples, self.translation_graph)
+        c("finished add of states entries")
+
+
+    def translateCities(self):
+        for cidade in d["cidades"]:
+            cid=cidade[0]
+            nome=cidade[1] # ok.
+            eid=cidade[2] # estado ok.
+            slug=cidade[3] # ok.
+            created=cidade[4] # ok.
+            updated=cidade[5] # ok.
+            relevance=cidade[6] # ok.
+            uri = P.rdf.ic(po.City,
+                            self.snapshotid+"-"+str(cid),
+                            self.translation_graph, self.snapshoturi)
+            triples = [
+                    (uri, po.name, nome),
+                    (uri, po.state,
+                        po.State+'#'+self.snapshotid+str(eid)),
+                    (uri, po.slug, slug),
+                    (uri, po.createdAt, created),
+                    (uri, po.relevance, relevance)
+            ]
+            if updated != created:
+                triples += [
+                           (uri, po.updatedAt, updated),
+                           ]
+            count += 1
+            if count % 60 == 0:
+                c("finished cities k entries:", count, "ntriples:", len(triples))
+                P.add(triples, self.translation_graph)
+                c("finished add of cities entries")
+                triples = []
+        if triples:
+                P.add(triples, self.translation_graph)
+        c("finished add of cities entries")
+
+    def translateNeighborhoods(self):
+        count = 0
+        for bairro in d["bairros"]:
+            bid=bairro[0] # ok.
+            nome=bairro[1] # ok.
+            cid=bairro[2] # ok.
+            created=bairro[3] # ok.
+            updated=bairro[4] # ok.
+            relevance=bairro[5] # ok.
+            uri = P.rdf.ic(po.Neighborhood,
+                                self.snapshotid+"-"+str(bid),
+                                self.translation_graph, self.snapshoturi)
+            triples = [
+                    (uri, po.name, nome),
+                    (uri, po.city,
+                        po.City+'#'+self.snapshotid+'-'+str(cid)),
+                    (uri, po.createdAt, created),
+                    (uri, po.relevance, relevance)
+            ]
+            if updated != created:
+                triples += [
+                           (uri, po.updatedAt, updated),
+                           ]
+            count += 1
+            if count % 60 == 0:
+                c("finished neighborhood entries:", count, "ntriples:", len(triples))
+                P.add(triples, self.translation_graph)
+                c("finished add of neighborhood entries")
+                triples = []
+        if triples:
+                P.add(triples, self.translation_graph)
+        c("finished add of neighborhood entries")
+
+    def translatePlaces(self):
+        count = 0
+        for local in d["locais"]:
+            lid=local[0] # ok.
+            rid=local[1]
+            rtype=local[2]
+            bid=local[3] # ok.
+            cid=local[4] # ok.
+            created=local[7] # ok.
+            updated=local[8] # ok.
+            cep=local[9] # ok.
+            eid=local[10] # ok.
+            uri = P.rdf.ic(po.Place,
+                                self.snapshotid+"-"+str(lid),
+                                self.translation_graph, self.snapshoturi)
+            triples = [(uri, po.createdAt, created)]
+            if bid:
+                triples.append((uri, po.neighborhood,
+                po.Neighborhood+'#'+self.snapshotid+'-'+bid))
+            if cid:
+                triples.append((uri, po.city,
+                po.City+'#'+self.snapshotid+'-'+cid))
+            if eid:
+                triples.append((uri, po.state,
+                po.State+'#'+self.snapshotid+'-'+eid))
+            if cep:
+                triples.append((uri, po.cep, cep))
+            if updated != created:
+                triples += [
+                           (uri, po.updatedAt, updated),
+                           ]
+            if rtype=="Topico":
+                uri_=po.Topic+'#'+self.snapshotid+'-'+str(rid)
+            elif rtype=="User":
+                uri_=po.User+'#'+self.snapshotid+'-'+str(rid)
+            elif rtype=="Competition":
+                uri_=po.Competition+'#'+self.snapshotid+'-'+str(rid)
+            elif rtype=="Observatorio":
+                uri_=po.Observatory+'#'+self.snapshotid+'-'+str(rid)
+            if rtype:
+                triples.append((uri, po.accountable, uri_))
+            count += 1
+            if count % 60 == 0:
+                c("finished places entries:", count, "ntriples:", len(triples))
+                P.add(triples, self.translation_graph)
+                c("finished add of places entries")
+                triples = []
+        if triples:
+                P.add(triples, self.translation_graph)
+        c("finished add of places entries")
+
+
+    def translateSupporters(self):
+        count = 0
+        for adesao in d["adesoes"]:
+            tid=adesao[0] # ok.
+            uid=adesao[1] # ok.
+            created=adesao[2]
+            updated=adesao[3]
+            aid=adesao[4] # ok.
+            uri = P.rdf.ic(po.Support,
+                                self.snapshotid+"-"+str(aid),
+                                self.translation_graph, self.snapshoturi)
+            triples = [
+                    (uri, po.participant,
+                        po.Participant+'#'+self.snapshotid+'-'+uid),
+                    (uri, po.topic,
+                        po.Topic+'#'+self.snapshotid+'-'+tid),
+                    (uri, po.created, created),
+            ]
+            if updated != created:
+                triples += [
+                           (uri, po.updatedAt, updated),
+                           ]
+            count += 1
+            if count % 60 == 0:
+                c("finished supporters entries:", count, "ntriples:", len(triples))
+                P.add(triples, self.translation_graph)
+                c("finished add of supporters entries")
+                triples = []
+        if triples:
+                P.add(triples, self.translation_graph)
+        c("finished add of supporters entries")
+
+    def translateLinks(self):
+        for link in d['links']:
+            lid=link[0]
+            nome=link[1]
+            url=link[2]
+            tid=link[4]
+            created=link[5]
+            updated=link[6]
+            uri = P.rdf.ic(po.Link,
+                                self.snapshotid+"-"+str(lid),
+                                self.translation_graph, self.snapshoturi)
+            triples = [
+                    (uri, po.name, nome),
+                    (uri, po.url, url),
+                    (uri, po.topic,
+                        po.Topic+'#'+self.snapshotid+'-'+str(tid)),
+                    uri, po.createdAt, created)
+            ]
+            if updated != created:
+                triples += [
+                           (uri, po.updatedAt, updated),
+                           ]
+            count += 1
+            if count % 60 == 0:
+                c("finished links entries:", count, "ntriples:", len(triples))
+                P.add(triples, self.translation_graph)
+                c("finished add of links entries")
+                triples = []
+        if triples:
+                P.add(triples, self.translation_graph)
+        c("finished add of links entries")
+    def translateObservatories(self):
+        =
+        return
     def translateToRdf(self):
         pass
         self.translateUsers()
@@ -287,6 +637,16 @@ class CidadeDemocraticaPublishing:
         self.translateTopics()
         self.translateComments()
         self.translateCompetitions()
+        self.translatePrizes()
+        self.translateTags()
+        self.translateTaggings()
+        self.translateStates()
+        self.translateCities()
+        self.translateNeighborhoods()
+        self.translatePlaces()
+        self.translateSupporters()
+        self.translateLinks()
+        translateObservatories()
         pass
 
     def getData(self):
