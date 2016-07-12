@@ -68,6 +68,26 @@ class ParticipabrPublishing(TranslationPublishing):
         c('participation ttl serialized')
         g.serialize(pub_dir+'participabr.rdf', 'xml')
         c('participation xml serialized')
+        # metadados: group, platform, 
+        triples = [
+                 (self.snapshoturi, a, po.Snapshot),
+                 (self.snapshoturi, a, po.ParticipaBRSnapshot),
+                 (self.snapshoturi, po.snapshotID, self.snapshotid),
+                 (self.snapshoturi, po.isEgo, False),
+                 (self.snapshoturi, po.isGroup, True),
+                 (self.snapshoturi, po.isFriendship, True),
+                 (self.snapshoturi, po.isInteraction, True),
+                 (self.snapshoturi, po.isPost, True),
+                 (self.snapshoturi, po.humanizedName, 'ParticipaBR'),
+                 (self.snapshoturi, po.dateObtained, datetime.date(2012,
+                     6, 28)),
+                 ]
+        g = r.Graph()
+        g.addN(triples)
+        g.serialize(pub_dir+'participabrMeta.ttl', 'turtle')
+        c('participation meta ttl serialized')
+        g.serialize(pub_dir+'participabrMeta.rdf', 'xml')
+        c('participation meta xml serialized')
 
     def getID(self):
         self.__ID += 1

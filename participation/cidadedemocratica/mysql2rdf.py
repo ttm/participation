@@ -23,7 +23,42 @@ class CidadeDemocraticaPublishing:
         return
         c("start translate")
         self.translateToRdf()
+        self.makeMeta()
+        self.writeRdf()
 
+    def writeRdf(self):
+        pub_dir = './cidadedemocratica_snapshot/'
+        if not os.path.isdir(pub_dir):
+            os.mkdir(pub_dir)
+        g = P.context(self.translation_graph)
+        g.serialize(pub_dir+'cidadedemocratica.ttl', 'turtle')
+        c('participation ttl serialized')
+        g.serialize(pub_dir+'cidadedemocratica.rdf', 'xml')
+        c('participation xml serialized')
+        # metadados: group, platform, 
+        g = P.context(self.meta_graph)
+        g.serialize(pub_dir+'cidadedemocraticaMeta.ttl', 'turtle')
+        c('participation meta ttl serialized')
+        g.serialize(pub_dir+'cidadedemocraticaMeta.rdf', 'xml')
+        c('participation meta xml serialized')
+
+    def makeMeta(self):
+        triples = [
+                 (self.snapshoturi, a, po.Snapshot),
+                 (self.snapshoturi, a, po.AASnapshot),
+                 (self.snapshoturi, a, po.AAIRCSnapshot),
+                 (self.snapshoturi, po.snapshotID, self.snapshotid),
+                 (self.snapshoturi, po.isEgo, False),
+                 (self.snapshoturi, po.isGroup, True),
+                 (self.snapshoturi, po.isFriendship, False),
+                 (self.snapshoturi, po.isInteraction, False),
+                 (self.snapshoturi, po.isPost, True),
+                 (self.snapshoturi, po.humanizedName, 'Algorithmic
+                     Autoregulation'),
+                 (self.snapshoturi, po.dateObtained, datetime.date(2014,
+                     3, 19)),
+                 ]
+        P.add(triples, self.meta_graph)
     def translateUsers(self):
         triples = []
         count = 0

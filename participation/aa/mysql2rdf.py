@@ -24,6 +24,26 @@ class MysqlPublishing(AAPublishing):
         for i in locals_:
             exec("self.{}={}".format(i, i))
         self.rdfMysql()
+        self.makeMeta()
+
+    def makeMeta(self):
+        triples = [
+                 (self.snapshoturi, a, po.Snapshot),
+                 (self.snapshoturi, a, po.AASnapshot),
+                 (self.snapshoturi, a, po.AAMysqlSnapshot),
+                 (self.snapshoturi, po.snapshotID, self.snapshotid),
+                 (self.snapshoturi, po.isEgo, False),
+                 (self.snapshoturi, po.isGroup, True),
+                 (self.snapshoturi, po.isFriendship, False),
+                 (self.snapshoturi, po.isInteraction, False),
+                 (self.snapshoturi, po.isPost, True),
+                 (self.snapshoturi, po.humanizedName, 'Algorithmic
+                     Autoregulation'),
+                 (self.snapshoturi, po.dateObtained, datetime.date(2014,
+                     4, 1)),
+                 ]
+        P.add(triples, self.meta_graph)
+
 
     def rdfMysql(self):
         c("started triplification of aa mysql legacy")

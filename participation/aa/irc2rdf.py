@@ -36,6 +36,23 @@ class LogPublishing(AAPublishing):
         # self.makeMetadata()
         # self.writeAll()
 
+    def makeMeta(self):
+        triples = [
+                 (self.snapshoturi, a, po.Snapshot),
+                 (self.snapshoturi, a, po.AASnapshot),
+                 (self.snapshoturi, a, po.AAIRCSnapshot),
+                 (self.snapshoturi, po.snapshotID, self.snapshotid),
+                 (self.snapshoturi, po.isEgo, False),
+                 (self.snapshoturi, po.isGroup, True),
+                 (self.snapshoturi, po.isFriendship, False),
+                 (self.snapshoturi, po.isInteraction, False),
+                 (self.snapshoturi, po.isPost, True),
+                 (self.snapshoturi, po.humanizedName, 'Algorithmic
+                     Autoregulation'),
+                 (self.snapshoturi, po.dateObtained, datetime.date(2015,
+                     7, 15)),
+                 ]
+        P.add(triples, self.meta_graph)
     def rdfTranslate(self):
         with codecs.open(self.logfile, "rb", "iso-8859-1") as f:
             logtext = P.utils.cleanText(S.irc.log2rdf.textFix(f.read()))
