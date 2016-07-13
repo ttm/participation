@@ -59,13 +59,13 @@ def publishAll(mysqldb=None, mongoshouts=None, irclogs=None, oreshouts=None):
     return mysqldb, mongoshouts, irclog, oreshouts
 
 if __name__ == "__main__":
-    # ss=Pa.aa.access.parseLegacyFiles(1,0,0,0)
-    # ss=Pa.aa.access.parseLegacyFiles(0,1,0,0)
-    # ss=Pa.aa.access.parseLegacyFiles(0,0,1,0)
     import participation as Pa
+    # ss=Pa.aa.access.parseLegacyFiles(1,0,0,0)
+    ss=Pa.aa.access.parseLegacyFiles(0,1,1,0)
+    # ss=Pa.aa.access.parseLegacyFiles(0,0,1,0)
     c("started access")
     # ss = Pa.aa.access.parseLegacyFiles(0, 0, 1, 0)
-    ss = Pa.aa.access.parseLegacyFiles(1, 1, 1, 1)
+    # ss = Pa.aa.access.parseLegacyFiles(1, 1, 1, 1)
     c("finished access, starting triplification")
     triplification_classes = Pa.aa.render.publishAll(*ss)
     c("finished publication of all aa")

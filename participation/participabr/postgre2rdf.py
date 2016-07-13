@@ -68,7 +68,7 @@ class ParticipabrPublishing(TranslationPublishing):
         c('participation ttl serialized')
         g.serialize(pub_dir+'participabr.rdf', 'xml')
         c('participation xml serialized')
-        # metadados: group, platform, 
+        # metadados: group, platform,
         triples = [
                  (self.snapshoturi, a, po.Snapshot),
                  (self.snapshoturi, a, po.ParticipaBRSnapshot),
@@ -82,8 +82,8 @@ class ParticipabrPublishing(TranslationPublishing):
                  (self.snapshoturi, po.dateObtained, datetime.date(2012,
                      6, 28)),
                  ]
-        g = r.Graph()
-        g.addN(triples)
+        P.add(triples, self.meta_graph)
+        g = P.context(self.meta_graph)
         g.serialize(pub_dir+'participabrMeta.ttl', 'turtle')
         c('participation meta ttl serialized')
         g.serialize(pub_dir+'participabrMeta.rdf', 'xml')

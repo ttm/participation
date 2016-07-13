@@ -4,7 +4,7 @@ import codecs
 import social as S
 import percolation as P
 from .general import AAPublishing
-from percolation.rdf import po, c
+from percolation.rdf import po, c, a
 regex_url = re.compile(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|'
                        r'[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
 rmsg = (r"(\d{4})\-(\d{2})\-(\d{2})T(\d{2}):(\d{2}):(\d{2})  \<(.*?)\>"
@@ -33,7 +33,7 @@ class LogPublishing(AAPublishing):
         for i in locals_:
             exec("self.{}={}".format(i, i))
         self.rdfTranslate()
-        # self.makeMetadata()
+        self.makeMeta()
         # self.writeAll()
 
     def makeMeta(self):
@@ -47,10 +47,8 @@ class LogPublishing(AAPublishing):
                  (self.snapshoturi, po.isFriendship, False),
                  (self.snapshoturi, po.isInteraction, False),
                  (self.snapshoturi, po.isPost, True),
-                 (self.snapshoturi, po.humanizedName, 'Algorithmic
-                     Autoregulation'),
-                 (self.snapshoturi, po.dateObtained, datetime.date(2015,
-                     7, 15)),
+                 (self.snapshoturi, po.humanizedName, 'Algorithmic Autoregulation'),
+                 (self.snapshoturi, po.dateObtained, datetime.date(2015, 7, 15)),
                  ]
         P.add(triples, self.meta_graph)
     def rdfTranslate(self):

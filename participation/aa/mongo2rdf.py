@@ -1,6 +1,7 @@
 from .general import AAPublishing
+import datetime
 import percolation as P
-from percolation.rdf import po, c
+from percolation.rdf import po, c, a
 
 
 class MongoPublishing(AAPublishing):
@@ -22,6 +23,7 @@ class MongoPublishing(AAPublishing):
         for i in locals_:
             exec("self.{}={}".format(i, i))
         self.rdfMongo()
+        self.makeMeta()
 
     def makeMeta(self):
         triples = [
@@ -34,10 +36,8 @@ class MongoPublishing(AAPublishing):
                  (self.snapshoturi, po.isFriendship, False),
                  (self.snapshoturi, po.isInteraction, False),
                  (self.snapshoturi, po.isPost, True),
-                 (self.snapshoturi, po.humanizedName, 'Algorithmic
-                     Autoregulation'),
-                 (self.snapshoturi, po.dateObtained, datetime.date(2016,
-                     7, 11)),
+                 (self.snapshoturi, po.humanizedName, 'Algorithmic Autoregulation'),
+                 (self.snapshoturi, po.dateObtained, datetime.date(2016, 7, 11)),
                  ]
         P.add(triples, self.meta_graph)
 

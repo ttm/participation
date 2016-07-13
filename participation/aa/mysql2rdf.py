@@ -1,6 +1,7 @@
 from .general import AAPublishing
+import datetime
 import percolation as P
-from percolation.rdf import po, c
+from percolation.rdf import po, c, a
 
 
 class MysqlPublishing(AAPublishing):
@@ -37,8 +38,7 @@ class MysqlPublishing(AAPublishing):
                  (self.snapshoturi, po.isFriendship, False),
                  (self.snapshoturi, po.isInteraction, False),
                  (self.snapshoturi, po.isPost, True),
-                 (self.snapshoturi, po.humanizedName, 'Algorithmic
-                     Autoregulation'),
+                 (self.snapshoturi, po.humanizedName, 'Algorithmic Autoregulation'),
                  (self.snapshoturi, po.dateObtained, datetime.date(2014,
                      4, 1)),
                  ]
