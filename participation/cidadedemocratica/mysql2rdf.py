@@ -17,7 +17,7 @@ class CidadeDemocraticaPublishing:
     __ID = 0
 
     def __init__(self):
-        self.snapshoturi = P.rdf.ic(po.CidadeDemocraticaSnapshot,
+        self.snapshoturi = P.rdf.ic(po.Snapshot,
                                     self.snapshotid, self.translation_graph)
         c("get data")
         self.getData()

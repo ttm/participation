@@ -41,7 +41,7 @@ class ParticipabrPublishing(TranslationPublishing):
 
     def __init__(self, postgresql_cursor, profiles=True, articles=True,
                  comments=True):
-        snapshoturi = P.rdf.ic(po.ParticipabrSnapshot,
+        snapshoturi = P.rdf.ic(po.Snapshot,
                                self.snapshotid, self.translation_graph)
         P.add((snapshoturi, a, po.Snapshot), context=self.translation_graph)
         cur = postgresql_cursor
