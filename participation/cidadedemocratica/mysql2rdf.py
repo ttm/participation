@@ -294,8 +294,8 @@ class CidadeDemocraticaPublishing:
                 (commenturi, po.author, participanturi),
                 (commenturi, po.topic, topicuri),
                 (commenturi, po.text, body),
-                (commenturi, po.nChars, len(body)),
-                (commenturi, po.commentType, trans[ctype]),
+                # (commenturi, po.nChars, len(body)),
+                (commenturi, po.type, trans[ctype]),
                 (topicuri, po.createdAt, created),
             ]
             if updated != created:
@@ -631,7 +631,7 @@ class CidadeDemocraticaPublishing:
                         po.Participant+'#'+self.snapshotid+'-'+str(uid)),
                     (uri, po.topic,
                         po.Topic+'#'+self.snapshotid+'-'+str(tid)),
-                    (uri, po.created, created),
+                    (uri, po.createdAt, created),
             ]
             if updated != created:
                 triples += [
@@ -855,20 +855,20 @@ class CidadeDemocraticaPublishing:
         self.translateComments()
         self.translateCompetitions()
         self.translatePrizes()
-        self.translateTags()
-        self.translateTaggings()
+        # self.translateTags()
+        # self.translateTaggings()
         self.translateStates()
         self.translateCities()
         self.translateNeighborhoods()
         self.translatePlaces()
         self.translateSupporters()
-        self.translateLinks()
+        # self.translateLinks()
         self.translateObservatories()
-        self.translateObservatoryTags()
-        self.translateLoginHistory()
+        # self.translateObservatoryTags()
+        # self.translateLoginHistory()
         self.translateInspirations()
-        self.translateImages()
-        self.translateMacrotags()
+        # self.translateImages()
+        # self.translateMacrotags()
 
     def getData(self):
         db = MySQLdb.connect(user=cd.mysqluser, passwd=cd.mysqlpassword,
