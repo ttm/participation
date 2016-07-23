@@ -28,15 +28,15 @@ class MongoPublishing(AAPublishing):
     def makeMeta(self):
         triples = [
                  (self.snapshoturi, a, po.Snapshot),
-                 (self.snapshoturi, a, po.AASnapshot),
-                 (self.snapshoturi, a, po.AAMongoSnapshot),
+                 # (self.snapshoturi, a, po.AASnapshot),
+                 # (self.snapshoturi, a, po.AAMongoSnapshot),
                  (self.snapshoturi, po.snapshotID, self.snapshotid),
                  (self.snapshoturi, po.isEgo, False),
                  (self.snapshoturi, po.isGroup, True),
                  (self.snapshoturi, po.isFriendship, False),
                  (self.snapshoturi, po.isInteraction, False),
                  (self.snapshoturi, po.isPost, True),
-                 (self.snapshoturi, po.socialProtocolTag, 'Algorithmic Autoregulation'),
+                 (self.snapshoturi, po.socialProtocol, 'Algorithmic Autoregulation'),
                  (self.snapshoturi, po.dateObtained, datetime.date(2016, 7, 11)),
                  ]
         P.add(triples, self.meta_graph)
