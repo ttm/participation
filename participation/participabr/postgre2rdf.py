@@ -104,46 +104,53 @@ class ParticipabrPublishing(TranslationPublishing):
             participanturi = P.rdf.ic(po.Participant,
                                       self.snapshotid+"-"+identifier,
                                       self.translation_graph, self.snapshoturi)
-            profileuri = P.rdf.ic(po.Profile,
-                                  self.snapshotid+"-"+str(id_),
-                                  self.translation_graph,
-                                  self.snapshoturi)
+            # profileuri = P.rdf.ic(po.Profile,
+            #                       self.snapshotid+"-"+str(id_),
+            #                       self.translation_graph,
+            #                       self.snapshoturi)
             # c(identifier)
             assert bool(name)
             assert type_ in ("Person", "Community", "Enterprise")
-            assert visible in (False, True)
-            assert public_profile in (False, True)
+            assert isinstance(visible, bool)
+            assert isinstance(public_profile, bool)
             assert isinstance(created_at, datetime.datetime)
             assert isinstance(updated_at, datetime.datetime)
             triples += [
                       (participanturi, po.name, name),
-                      (participanturi, a, eval("po."+type_)),
-                      (participanturi, po.profile, profileuri),
-                      (profileuri, po.visible, visible),
-                      (profileuri, po.public, public_profile),
-                      (profileuri, po.createdAt, created_at),
-                      (profileuri, po.updatedAt, updated_at),
+                      (participanturi, po.type, type_),
+                      (participanturi, po.profileVisible, visible),
+                      (participanturi, po.profilePublic, public_profile),
+                      (participanturi, po.createdAt, created_at),
+                      (participanturi, po.updatedAt, updated_at),
+                      # (participanturi, a, eval("po."+type_)),
+                      # (participanturi, po.profile, profileuri),
+                      # (profileuri, po.visible, visible),
+                      # (profileuri, po.public, public_profile),
+                      # (profileuri, po.createdAt, created_at),
+                      # (profileuri, po.updatedAt, updated_at),
                       ]
             assert isinstance(lat, (type(None), float))
             assert isinstance(lng, (type(None), float))
             assert type(lat) == type(lng)
             if lat:
                 # place = r.BNode()
-                place = P.rdf.ic(po.Place,
-                                 self.snapshotid+"-"+str(self.getID()),
-                                 self.translation_graph, self.snapshoturi)
+                # place = P.rdf.ic(po.Place,
+                #                  self.snapshotid+"-"+str(self.getID()),
+                #                  self.translation_graph, self.snapshoturi)
                 triples += [
-                           (participanturi, po.basedNear, place),
-                           (place, po.latitude, lat),
-                           (place, po.longitude, lng),
+                           (participanturi, po.latitude, lat),
+                           (participanturi, po.longitude, lng),
+                           # (participanturi, po.basedNear, place),
+                           # (place, po.latitude, lat),
+                           # (place, po.longitude, lng),
                            ]
-            data_, triples_ = parseData(data, participanturi)
-            triples += triples_
-            for field in data_:
-                triples += [
-                           (participanturi, eval("po."+field), data_[field])
-                           ]
-            self.datas += [(data_, data)]
+            # data_, triples_ = parseData(data, participanturi)
+            # triples += triples_
+            # for field in data_:
+            #     triples += [
+            #                (participanturi, eval("po."+field), data_[field])
+            #                ]
+            # self.datas += [(data_, data)]
             email = self.emails.get(identifier)
             if email:
                 assert validate_email(email)
@@ -233,14 +240,18 @@ class ParticipabrPublishing(TranslationPublishing):
             identifier = self.profileids[profile_id]
             participanturi = po.Participant+"#"+self.snapshotid+"-"+identifier
             type__ = type_.split("::")[-1]
-            articleuri = P.rdf.ic(eval("po."+type__),
+            # articleuri = P.rdf.ic(eval("po."+type__),
+            #                       self.snapshotid+"-"+str(id_),
+            #                       self.translation_graph, self.snapshoturi)
+            articleuri = P.rdf.ic(po.Article,
                                   self.snapshotid+"-"+str(id_),
                                   self.translation_graph, self.snapshoturi)
             assert isinstance(created_at, datetime.datetime)
             assert isinstance(updated_at, datetime.datetime)
             assert isinstance(published_at, datetime.datetime)
             triples += [
-                       (articleuri, a, po.Article),
+                       # (articleuri, a, po.Article),
+                       (articleuri, po.type, type__),
                        (articleuri, po.author, participanturi),
                        (articleuri, po.createdAt, created_at),
                        (articleuri, po.updatedAt, updated_at),
@@ -259,11 +270,13 @@ class ParticipabrPublishing(TranslationPublishing):
                 self.addArticleAbstract(abstract, articleuri)
             if parent_id:
                 type2__ = self.articletypes[parent_id].split("::")[-1]
-                articleuri2 = P.rdf.ic(eval("po."+type2__),
+                # articleuri2 = P.rdf.ic(eval("po."+type2__),
+                articleuri2 = P.rdf.ic(po.Article,
                                        self.snapshotid+"-"+str(parent_id),
                                        self.translation_graph, self.snapshoturi)
                 triples += [
                            (articleuri, po.parent, articleuri2),
+                           (articleuri, po.type, type2__),
                            ]
                 if type__ == "Step":
                     assert isinstance(position, int)
@@ -285,10 +298,10 @@ class ParticipabrPublishing(TranslationPublishing):
                 triples += [
                            (articleuri, po.endAt, end_date),
                            ]
-            if setting:
-                data2_, triples2_ = parseData(setting, articleuri)
-                triples += triples2_
-                self.datas2 += [(data2_, setting)]
+            # if setting:
+            #     data2_, triples2_ = parseData(setting, articleuri)
+            #     triples += triples2_
+            #     self.datas2 += [(data2_, setting)]
             count += 1
             if count % 50 == 0:
                 c("articles done:", count)
@@ -322,18 +335,23 @@ class ParticipabrPublishing(TranslationPublishing):
             assert isinstance(body, str) and not re.findall(r"<.*>.*<.*>", body)
             assert isinstance(source_id, int)
             if source_id not in self.articletypes:
-                articleclass = po.Article
+                # articleclass = po.Article
+                pass
             else:
-                articleclass = eval(
-                    "po."+self.articletypes[source_id].split("::")[-1])
+                # articleclass = eval(
+                #     "po."+self.articletypes[source_id].split("::")[-1])
+                # triples.append((commenturi, po.type, self.articletypes[source_id].split("::")[-1])
+                pass
+            # articleuri = P.rdf.ic(
+            #     articleclass, self.snapshotid+"-"+str(source_id),
             articleuri = P.rdf.ic(
-                articleclass, self.snapshotid+"-"+str(source_id),
+                po.Article, self.snapshotid+"-"+str(source_id),
                 self.translation_graph, self.snapshoturi)
             triples += [
                        (commenturi, po.createdAt, created_at),
                        (commenturi, po.text, body.replace("\r", "\n")),
-                       (commenturi, po.nChars, len(body)),
-                       (commenturi, po.sourceArticle, articleuri),
+                       # (commenturi, po.nChars, len(body)),
+                       (commenturi, po.article, articleuri),
                        ]
             if title and len(title) > 2 and title.count(title[0]) != len(title)\
                     and not title.startswith("hub-message"):
@@ -434,8 +452,10 @@ class ParticipabrPublishing(TranslationPublishing):
                                self.translation_graph, self.snapshoturi)
             if voteable_type == "Article":
                 type__ = self.articletypes[voteable_id].split("::")[-1]
+                # referenceuri = \
+                #     eval("po."+type__)+"#"+self.snapshotid+"-"+str(voteable_id)
                 referenceuri = \
-                    eval("po."+type__)+"#"+self.snapshotid+"-"+str(voteable_id)
+                    po.Article+"#"+self.snapshotid+"-"+str(voteable_id)
             elif voteable_type == "Comment":
                 assert voteable_id in commentids
                 referenceuri = \
@@ -469,27 +489,29 @@ class ParticipabrPublishing(TranslationPublishing):
     def translateTagsTagging(self):
         triples = []
         count = 0
+        tags = {}
         for id_, name, parent_id, pending in self.tags_table.getMany(
                  ("id", "name", "parent_id", "pending")):
             assert isinstance(name, str)
             assert isinstance(id_, int)
             assert parent_id is None
             assert pending is False
-            taguri = P.rdf.ic(po.Tag, self.snapshotid+"-"+str(id_),
-                              self.translation_graph, self.snapshoturi)
-            triples += [
-                       (taguri, po.name, name)
-                       ]
-            count += 1
-            if count % 100 == 0:
-                c("tags done:", count)
-                c("ntriples:", len(triples))
-                P.add(triples, self.translation_graph)
-                c("finished add of tags")
-                triples = []
-        if triples:
-            c("ntriples:", len(triples))
-            P.add(triples, self.translation_graph)
+            # taguri = P.rdf.ic(po.Tag, self.snapshotid+"-"+str(id_),
+            #                   self.translation_graph, self.snapshoturi)
+            # triples += [
+            #            (taguri, po.name, name)
+            #            ]
+            tags[id_] = name
+        #     count += 1
+        #     if count % 100 == 0:
+        #         c("tags done:", count)
+        #         c("ntriples:", len(triples))
+        #         P.add(triples, self.translation_graph)
+        #         c("finished add of tags")
+        #         triples = []
+        # if triples:
+        #     c("ntriples:", len(triples))
+        #     P.add(triples, self.translation_graph)
 
         tagids = self.tags_table.get("id")
         count = 0
@@ -501,18 +523,21 @@ class ParticipabrPublishing(TranslationPublishing):
             assert isinstance(id_, int)
             assert tag_id in tagids
             assert isinstance(taggable_id, int)
-            assert isinstance(created_at, datetime.datetime)
-            assert taggable_type == "Article"
-            tagginguri = P.rdf.ic(po.Tagging, self.snapshotid+"-"+str(id_),
-                                  self.translation_graph, self.snapshoturi)
-            taguri = po.Tag+"#"+self.snapshotid+"-"+str(tag_id)
-            type__ = self.articletypes[taggable_id].split("::")[-1]
+            # assert isinstance(created_at, datetime.datetime)
+            # assert taggable_type == "Article"
+            # tagginguri = P.rdf.ic(po.Tagging, self.snapshotid+"-"+str(id_),
+            #                       self.translation_graph, self.snapshoturi)
+            # taguri = po.Tag+"#"+self.snapshotid+"-"+str(tag_id)
+            # type__ = self.articletypes[taggable_id].split("::")[-1]
+            # articleuri =\
+            #     eval("po."+type__)+"#"+self.snapshotid+"-"+str(taggable_id)
             articleuri =\
-                eval("po."+type__)+"#"+self.snapshotid+"-"+str(taggable_id)
+                po.Article+"#"+self.snapshotid+"-"+str(taggable_id)
             triples += [
-                       (tagginguri, po.tag, taguri),
-                       (tagginguri, po.article, articleuri),
-                       (tagginguri, po.createdAt, created_at),
+                       (articleuri, po.tag, tags[tag_id]),
+                       # (tagginguri, po.tag, taguri),
+                       # (tagginguri, po.article, articleuri),
+                       # (tagginguri, po.createdAt, created_at),
                        ]
             count += 1
             if count % 100 == 0:
