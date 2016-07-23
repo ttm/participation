@@ -36,7 +36,7 @@ class MongoPublishing(AAPublishing):
                  (self.snapshoturi, po.isFriendship, False),
                  (self.snapshoturi, po.isInteraction, False),
                  (self.snapshoturi, po.isPost, True),
-                 (self.snapshoturi, po.humanizedName, 'Algorithmic Autoregulation'),
+                 (self.snapshoturi, po.socialProtocolTag, 'Algorithmic Autoregulation'),
                  (self.snapshoturi, po.dateObtained, datetime.date(2016, 7, 11)),
                  ]
         P.add(triples, self.meta_graph)
@@ -56,7 +56,8 @@ class MongoPublishing(AAPublishing):
                                       self.translation_graph, self.snapshoturi)
             triples += [
                        (shouturi, po.provenance, "mongodb"),
-                       (shouturi, po.textMessage, shout["shout"]),
+                       (shouturi, po.text, shout["shout"]),
+                       (shouturi, po.nChars, len(shout["shout"])),
                        (shouturi, po.createdAt, shout["time"]),
                        (shouturi, po.author, participanturi),
                        (participanturi, po.nick, shout["nick"]),

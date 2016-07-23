@@ -50,15 +50,15 @@ class CidadeDemocraticaPublishing:
     def makeMeta(self):
         triples = [
                  (self.snapshoturi, a, po.Snapshot),
-                 (self.snapshoturi, a, po.AASnapshot),
-                 (self.snapshoturi, a, po.AAIRCSnapshot),
+                 # (self.snapshoturi, a, po.AASnapshot),
+                 # (self.snapshoturi, a, po.AAIRCSnapshot),
                  (self.snapshoturi, po.snapshotID, self.snapshotid),
                  (self.snapshoturi, po.isEgo, False),
                  (self.snapshoturi, po.isGroup, True),
                  (self.snapshoturi, po.isFriendship, False),
                  (self.snapshoturi, po.isInteraction, False),
                  (self.snapshoturi, po.isPost, True),
-                 (self.snapshoturi, po.humanizedName, 'Algorithmic Autoregulation'),
+                 (self.snapshoturi, po.socialProtocol, 'Cidade Democrática'),
                  (self.snapshoturi, po.dateObtained, datetime.date(2014, 3, 19)),
                  ]
         P.add(triples, self.meta_graph)
@@ -293,7 +293,8 @@ class CidadeDemocraticaPublishing:
             triples += [
                 (commenturi, po.author, participanturi),
                 (commenturi, po.topic, topicuri),
-                (commenturi, po.body, body),
+                (commenturi, po.text, body),
+                (commenturi, po.nChars, len(body)),
                 (commenturi, po.commentType, trans[ctype]),
                 (topicuri, po.createdAt, created),
             ]

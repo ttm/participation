@@ -30,15 +30,15 @@ class MysqlPublishing(AAPublishing):
     def makeMeta(self):
         triples = [
                  (self.snapshoturi, a, po.Snapshot),
-                 (self.snapshoturi, a, po.AASnapshot),
-                 (self.snapshoturi, a, po.AAMysqlSnapshot),
+                 # (self.snapshoturi, a, po.AASnapshot),
+                 # (self.snapshoturi, a, po.AAMysqlSnapshot),
                  (self.snapshoturi, po.snapshotID, self.snapshotid),
                  (self.snapshoturi, po.isEgo, False),
                  (self.snapshoturi, po.isGroup, True),
                  (self.snapshoturi, po.isFriendship, False),
                  (self.snapshoturi, po.isInteraction, False),
                  (self.snapshoturi, po.isPost, True),
-                 (self.snapshoturi, po.humanizedName, 'Algorithmic Autoregulation'),
+                 (self.snapshoturi, po.socialProtocol, 'Algorithmic Autoregulation'),
                  (self.snapshoturi, po.dateObtained, datetime.date(2014,
                      4, 1)),
                  ]
@@ -74,7 +74,7 @@ class MysqlPublishing(AAPublishing):
             useruri = user_dict[session[1]]
             triples.extend((
                        (sessionuri, po.author, useruri),
-                       (sessionuri, po.created, session[2]),
+                       (sessionuri, po.createdAt, session[2]),
             ))
             if session[3]:
                 if session[3] in user_dict:
@@ -111,7 +111,8 @@ class MysqlPublishing(AAPublishing):
             useruri = user_dict[shout[2]]
             triples.append((shouturi, po.author, useruri))
             triples.extend((
-                       (shouturi, po.textMessage, shout[4]),
+                       (shouturi, po.text, shout[4]),
+                       (shouturi, po.nChars, len(shout[4])),
                        (shouturi, po.createdAt, shout[5]),
                        (shouturi, po.isValid, shout[6]),
             ))
