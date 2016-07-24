@@ -10,7 +10,7 @@ class MysqlPublishing(AAPublishing):
     snapshotid = "aa-mysql-legacy"
 
     def __init__(self, mysqldict):
-        snapshoturi = P.rdf.ic(po.AASnapshot, self.snapshotid,
+        snapshoturi = P.rdf.ic(po.Snapshot, self.snapshotid,
                                self.translation_graph)
         locals_ = locals().copy()
         messagevars = ["textMessage", "session", "author", "isValid",
@@ -112,7 +112,7 @@ class MysqlPublishing(AAPublishing):
             triples.append((shouturi, po.author, useruri))
             triples.extend((
                        (shouturi, po.text, shout[4]),
-                       (shouturi, po.nChars, len(shout[4])),
+                       # (shouturi, po.nChars, len(shout[4])),
                        (shouturi, po.createdAt, shout[5]),
                        (shouturi, po.isValid, shout[6]),
             ))

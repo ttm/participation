@@ -43,7 +43,7 @@ class ParticipabrPublishing(TranslationPublishing):
                  comments=True):
         snapshoturi = P.rdf.ic(po.Snapshot,
                                self.snapshotid, self.translation_graph)
-        P.add((snapshoturi, a, po.Snapshot), context=self.translation_graph)
+        # P.add((snapshoturi, a, po.Snapshot), context=self.translation_graph)
         cur = postgresql_cursor
         datas2 = []
         datas = []

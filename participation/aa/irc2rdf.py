@@ -1,6 +1,7 @@
 import re
 import datetime
 import codecs
+import random
 import social as S
 import percolation as P
 from .general import AAPublishing
@@ -18,7 +19,7 @@ class LogPublishing(AAPublishing):
         # AAPublishing.__init__(self, final_path, self.snapshotid)
         snapshotid = "aa-irc-legacy-"+logfile.split("/")[-1].replace("#", "")
         translation_graph = "participation_aairc_translation-"+snapshotid
-        snapshoturi = P.rdf.ic(po.AASnapshot, snapshotid,
+        snapshoturi = P.rdf.ic(po.Snapshot, snapshotid,
                                translation_graph)
         # rmsg=r"(\d{4})\-(\d{2})\-(\d{2})T(\d{2}):(\d{2}):(\d{2}) \
         #    \<(.*?)\> (.*)" # message
@@ -66,12 +67,16 @@ class LogPublishing(AAPublishing):
         triples = []
         c("found", len(self.messages), "aa shouts")
         count = 0
+        shoutids = set()
         for message in self.messages:
             year, month, day, hour, minute, second, \
                 nick, text, shout1, shout2 = message
             datetime_ = datetime.datetime(*[int(i) for i in (year, month,
                                             day, hour, minute, second)])
             shoutid = self.snapshotid+"-"+nick+"-"+datetime_.isoformat()
+            while shoutid in shoutids:
+                shoutid += '_r_%05x' % random.randrange(16**5)
+            shoutids.add(shoutid)
             shouturi = P.rdf.ic(po.Shout, shoutid, self.translation_graph,
                                 self.snapshoturi)
             if shout1:
@@ -80,13 +85,13 @@ class LogPublishing(AAPublishing):
             elif shout2:
                 # if shout2.startswith("shout"):
                 #     shout2 = shout2[5:].strip()
-                shout_text = shout2[5:].strip()
+                shout_text = shout2.strip()
                 # triples += self.addText(shouturi, shout2)
             else:
                 raise ValueError("Shout vazio?")
             triples += [
                       (shouturi, po.text, shout_text),
-                      (shouturi, po.nChars, len(shout_text)),
+                      # (shouturi, po.nChars, len(shout_text)),
                       ]
             urls = regex_url.findall(shout_text)
             for url in urls:
@@ -97,7 +102,7 @@ class LogPublishing(AAPublishing):
             participanturi = P.rdf.ic(po.Participant, participantid,
                                       self.translation_graph, self.snapshoturi)
             triples += [
-                       (shouturi, po.textMessage, text),
+                       (shouturi, po.rawText, text),
                        (shouturi, po.createdAt, datetime_),
                        (shouturi, po.author, participanturi),
                        (participanturi, po.nick, nick),

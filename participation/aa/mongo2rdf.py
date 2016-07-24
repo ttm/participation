@@ -11,7 +11,7 @@ class MongoPublishing(AAPublishing):
 
     def __init__(self, mongoshouts):
         # minimum aa, aa01
-        snapshoturi = P.rdf.ic(po.AASnapshot, self.snapshotid,
+        snapshoturi = P.rdf.ic(po.Snapshot, self.snapshotid,
                                self.translation_graph)
         provenance = "mongodb"
         comment = "shouts from minimum aa, a simplified mongodb version of \
@@ -57,7 +57,7 @@ class MongoPublishing(AAPublishing):
             triples += [
                        (shouturi, po.provenance, "mongodb"),
                        (shouturi, po.text, shout["shout"]),
-                       (shouturi, po.nChars, len(shout["shout"])),
+                       # (shouturi, po.nChars, len(shout["shout"])),
                        (shouturi, po.createdAt, shout["time"]),
                        (shouturi, po.author, participanturi),
                        (participanturi, po.nick, shout["nick"]),
