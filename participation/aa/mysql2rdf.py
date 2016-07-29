@@ -8,6 +8,7 @@ class MysqlPublishing(AAPublishing):
     translation_graph = "participation_aamysql_translation"
     meta_graph = "participation_aamysql_meta"
     snapshotid = "aa-mysql-legacy"
+    provenance_prefix = 'aa-legacy'
 
     def __init__(self, mysqldict):
         snapshoturi = P.rdf.ic(po.Snapshot, self.snapshotid,
@@ -53,13 +54,16 @@ class MysqlPublishing(AAPublishing):
             nick = user[2]
             if not nick:
                 continue
-            useruri = P.rdf.ic(po.Participant, nick, self.translation_graph,
+            useruri = P.rdf.ic(po.Participant, self.provenance_prefix+'-'+nick, self.translation_graph,
                                self.snapshoturi)
             user_dict[user[0]] = useruri
-            triples.append((useruri, po.nick, nick))
+            obs = P.rdf.ic(po.Observation, self.snapshotid+'-'+nick, self.translation_graph,
+                               self.snapshoturi)
+            triples.extend([(useruri, po.observation, obs),
+                (obs, po.nick, nick)])
             email = user[1]
             if email:
-                triples.append((useruri, po.email, nick))
+                triples.append((obs, po.email, email))
         c("finished triplification of participants")
         P.add(triples, self.translation_graph)
         c("finished add of participants")

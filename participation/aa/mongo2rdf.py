@@ -8,6 +8,7 @@ class MongoPublishing(AAPublishing):
     translation_graph = "participation_aamongo_translation"
     meta_graph = "participation_aammongo_meta"
     snapshotid = "aa-mongo-legacy"
+    provenance_prefix = 'aa-legacy'
 
     def __init__(self, mongoshouts):
         # minimum aa, aa01
@@ -52,6 +53,9 @@ class MongoPublishing(AAPublishing):
                                 self.snapshotid+"-"+str(shout["_id"]),
                                 self.translation_graph, self.snapshoturi)
             participanturi = P.rdf.ic(po.Participant,
+                                      self.provenance_prefix+"-"+str(shout["nick"]),
+                                      self.translation_graph, self.snapshoturi)
+            obs = P.rdf.ic(po.Observation,
                                       self.snapshotid+"-"+str(shout["nick"]),
                                       self.translation_graph, self.snapshoturi)
             triples += [
@@ -60,7 +64,8 @@ class MongoPublishing(AAPublishing):
                        # (shouturi, po.nChars, len(shout["shout"])),
                        (shouturi, po.createdAt, shout["time"]),
                        (shouturi, po.author, participanturi),
-                       (participanturi, po.nick, shout["nick"]),
+                       (participanturi, po.observation, obs),
+                       (obs, po.nick, shout["nick"]),
                        ]
             count += 1
             if count % 70 == 0:

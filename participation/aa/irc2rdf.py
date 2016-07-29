@@ -14,6 +14,7 @@ rmsg = (r"(\d{4})\-(\d{2})\-(\d{2})T(\d{2}):(\d{2}):(\d{2})  \<(.*?)\>"
 
 class LogPublishing(AAPublishing):
     meta_graph = "participation_aairc_meta"
+    provenance_prefix = 'aa-legacy'
 
     def __init__(self, logfile, final_path="aa_snapshots/"):
         # AAPublishing.__init__(self, final_path, self.snapshotid)
@@ -98,14 +99,17 @@ class LogPublishing(AAPublishing):
                 triples += [
                            (shouturi, po.hasUrl, url),
                            ]
-            participantid = self.snapshotid+"-"+nick
+            participantid = self.provenance_prefix+"-"+nick
             participanturi = P.rdf.ic(po.Participant, participantid,
+                                      self.translation_graph, self.snapshoturi)
+            obs = P.rdf.ic(po.Observation, self.snapshotid+'-'+nick,
                                       self.translation_graph, self.snapshoturi)
             triples += [
                        (shouturi, po.rawText, text),
                        (shouturi, po.createdAt, datetime_),
                        (shouturi, po.author, participanturi),
-                       (participanturi, po.nick, nick),
+                       (participanturi, po.observation, obs),
+                       (obs, po.nick, nick),
                        ]
             count += 1
             if count % 70 == 0:
