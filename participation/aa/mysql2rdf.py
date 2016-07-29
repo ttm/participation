@@ -11,7 +11,7 @@ class MysqlPublishing(AAPublishing):
 
     def __init__(self, mysqldict):
         snapshoturi = P.rdf.ic(po.Snapshot, self.snapshotid,
-                               self.translation_graph)
+                               self.meta_graph)
         locals_ = locals().copy()
         messagevars = ["textMessage", "session", "author", "isValid",
                        "createdAt"]

@@ -42,7 +42,7 @@ class ParticipabrPublishing(TranslationPublishing):
     def __init__(self, postgresql_cursor, profiles=True, articles=True,
                  comments=True):
         snapshoturi = P.rdf.ic(po.Snapshot,
-                               self.snapshotid, self.translation_graph)
+                               self.snapshotid, self.meta_graph)
         # P.add((snapshoturi, a, po.Snapshot), context=self.translation_graph)
         cur = postgresql_cursor
         datas2 = []
@@ -104,6 +104,9 @@ class ParticipabrPublishing(TranslationPublishing):
             participanturi = P.rdf.ic(po.Participant,
                                       self.snapshotid+"-"+identifier,
                                       self.translation_graph, self.snapshoturi)
+            obs = P.rdf.ic(po.Observation,
+                          self.snapshotid+"-"+identifier,
+                          self.translation_graph, self.snapshoturi)
             # profileuri = P.rdf.ic(po.Profile,
             #                       self.snapshotid+"-"+str(id_),
             #                       self.translation_graph,
@@ -116,12 +119,13 @@ class ParticipabrPublishing(TranslationPublishing):
             assert isinstance(created_at, datetime.datetime)
             assert isinstance(updated_at, datetime.datetime)
             triples += [
-                      (participanturi, po.name, name),
-                      (participanturi, po.type, type_),
-                      (participanturi, po.profileVisible, visible),
-                      (participanturi, po.profilePublic, public_profile),
-                      (participanturi, po.createdAt, created_at),
-                      (participanturi, po.updatedAt, updated_at),
+                      (participanturi, po.observation, obs),
+                      (obs, po.name, name),
+                      (obs, po.type, type_),
+                      (obs, po.profileVisible, visible),
+                      (obs, po.profilePublic, public_profile),
+                      (obs, po.createdAt, created_at),
+                      (obs, po.updatedAt, updated_at),
                       # (participanturi, a, eval("po."+type_)),
                       # (participanturi, po.profile, profileuri),
                       # (profileuri, po.visible, visible),
@@ -138,8 +142,8 @@ class ParticipabrPublishing(TranslationPublishing):
                 #                  self.snapshotid+"-"+str(self.getID()),
                 #                  self.translation_graph, self.snapshoturi)
                 triples += [
-                           (participanturi, po.latitude, lat),
-                           (participanturi, po.longitude, lng),
+                           (obs, po.latitude, lat),
+                           (obs, po.longitude, lng),
                            # (participanturi, po.basedNear, place),
                            # (place, po.latitude, lat),
                            # (place, po.longitude, lng),
@@ -155,7 +159,7 @@ class ParticipabrPublishing(TranslationPublishing):
             if email:
                 assert validate_email(email)
                 triples += [
-                           (participanturi, po.email, email),
+                           (obs, po.email, email),
                            ]
             count += 1
             if count % 20 == 0:
@@ -363,7 +367,7 @@ class ParticipabrPublishing(TranslationPublishing):
                 commenturi0 =\
                     po.Comment+"#"+self.snapshotid+"-"+str(reply_of_id)
                 triples += [
-                           (commenturi, po.replyOf, commenturi0)
+                           (commenturi, po.replyTo, commenturi0)
                            ]
             if ip_address:
                 triples += [
@@ -564,7 +568,7 @@ class ParticipabrPublishing(TranslationPublishing):
             c("start comments")
             self.translateComments()
             c("end comments")
-        # self.translateFriendships()
+        self.translateFriendships()
         # c("end friendships")
         self.translateVotes()
         c("end votes")
@@ -778,5 +782,4 @@ if __name__ == '__main__':
         database=participabr.postgre_database, user=participabr.postgre_user)
     cur = con.cursor()
     ParticipabrPublishing(cur)
-    print('banana')
     # ParticipabrPublishing(cur, profiles=False,articles=False)

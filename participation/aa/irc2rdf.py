@@ -20,7 +20,7 @@ class LogPublishing(AAPublishing):
         snapshotid = "aa-irc-legacy-"+logfile.split("/")[-1].replace("#", "")
         translation_graph = "participation_aairc_translation-"+snapshotid
         snapshoturi = P.rdf.ic(po.Snapshot, snapshotid,
-                               translation_graph)
+                               self.meta_graph)
         # rmsg=r"(\d{4})\-(\d{2})\-(\d{2})T(\d{2}):(\d{2}):(\d{2}) \
         #    \<(.*?)\> (.*)" # message
         participantvars = ["nick"]

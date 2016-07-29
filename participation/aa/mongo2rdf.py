@@ -12,7 +12,7 @@ class MongoPublishing(AAPublishing):
     def __init__(self, mongoshouts):
         # minimum aa, aa01
         snapshoturi = P.rdf.ic(po.Snapshot, self.snapshotid,
-                               self.translation_graph)
+                               self.meta_graph)
         provenance = "mongodb"
         comment = "shouts from minimum aa, a simplified mongodb version of \
             AA (aka aa01)"

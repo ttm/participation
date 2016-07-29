@@ -18,7 +18,7 @@ class CidadeDemocraticaPublishing:
 
     def __init__(self):
         self.snapshoturi = P.rdf.ic(po.Snapshot,
-                                    self.snapshotid, self.translation_graph)
+                                    self.snapshotid, self.meta_graph)
         c("get data")
         self.getData()
         c("start translate")
@@ -93,33 +93,37 @@ class CidadeDemocraticaPublishing:
             participanturi = P.rdf.ic(po.Participant,
                                       self.snapshotid+"-"+str(uid),
                                       self.translation_graph, self.snapshoturi)
+            obs = P.rdf.ic(po.Observation,
+                                      self.snapshotid+"-"+str(uid),
+                                      self.translation_graph, self.snapshoturi)
             triples += [
-                       (participanturi, po.email, email),
-                       (participanturi, po.createdAt, created),
-                       (participanturi, po.participantType, type_),
-                       (participanturi, po.profileCondition, condition),
+                       (participanturi, po.observation, obs),
+                       (obs, po.email, email),
+                       (obs, po.createdAt, created),
+                       (obs, po.type, type_),
+                       (obs, po.profileCondition, condition),
                        ]
             if updated != created:
                 triples += [
-                           (participanturi, po.updatedAt, updated),
+                           (obs, po.updatedAt, updated),
                            ]
             deleted = user[13]
             if deleted:
                 assert isinstance(deleted, datetime.datetime)
                 triples += [
-                           (participanturi,  po.deletedAt,  deleted),
+                           (obs,  po.deletedAt,  deleted),
                            ]
             relevance = user[20]
             if relevance:
                 assert isinstance(relevance, int)
                 triples += [
-                           (participanturi,  po.relevance,  relevance),
+                           (obs,  po.relevance,  relevance),
                            ]
             insp_count = user[30]
             if insp_count:
                 assert isinstance(insp_count, int)
                 triples += [
-                           (participanturi, po.inspirationCount, insp_count),
+                           (obs, po.inspirationCount, insp_count),
                            ]
             count += 1
             if count % 60 == 0:
@@ -147,44 +151,45 @@ class CidadeDemocraticaPublishing:
             assert isinstance(created, datetime.datetime)
             assert isinstance(updated, datetime.datetime)
             participanturi = po.Participant+'#'+self.snapshotid+"-"+str(uid)
+            obs = po.Observation+'#'+self.snapshotid+"-"+str(uid)
             triples += [
-                (participanturi, po.name, name),
-                (participanturi, po.gender, gender),
-                (participanturi, po.createdAt, created),
+                (obs, po.name, name),
+                (obs, po.gender, gender),
+                (obs, po.createdAt, created),
             ]
             if created != updated:
                 triples += [
-                    (participanturi, po.updatedAt, created),
+                    (obs, po.updatedAt, created),
                 ]
             phone = userd[3]
             if phone:
                 assert isinstance(phone, str)
                 triples += [
-                    (participanturi, po.phoneNumber, phone),
+                    (obs, po.phoneNumber, phone),
                 ]
             desc = userd[6]
             if desc:
                 assert isinstance(desc, str)
                 triples += [
-                    (participanturi, po.selfDescription,
+                    (obs, po.description,
                      desc.replace('', '')),
                 ]
             site = userd[5]
             if site:
                 triples += [
-                    (participanturi, po.website, site),
+                    (obs, po.website, site),
                 ]
             birthday = userd[8]
             if isinstance(birthday, datetime.date):
                 triples += [
-                    (participanturi, po.birthday, site),
+                    (obs, po.birthday, birthday),
                 ]
             fax = userd[9]
             if fax:
                 if len(fax) > 4:
                     if fax.count('-') < 6 and fax.count('0') < 6:
                         triples.append(
-                            (participanturi, po.fax, fax)
+                            (obs, po.fax, fax)
                         )
             count += 1
             if count % 60 == 0:
@@ -332,7 +337,7 @@ class CidadeDemocraticaPublishing:
                                       self.translation_graph, self.snapshoturi)
             triples += [
                     (competitionuri, po.shortDescription, sdesc),
-                    (competitionuri, po.longDescription, ldesc),
+                    (competitionuri, po.description, ldesc),
                     (competitionuri, po.authorDescription, adesc),
                     (competitionuri, po.createdAt, created),
                     (competitionuri, po.startAt, start),
@@ -474,7 +479,7 @@ class CidadeDemocraticaPublishing:
                            self.translation_graph, self.snapshoturi)
             triples += [
                     (uri, po.name, nome),
-                    (uri, po.abbreviatio, abr),
+                    (uri, po.abbreviation, abr),
                     (uri, po.createdAt, created),
                     (uri, po.relevance, relevance),
             ]
